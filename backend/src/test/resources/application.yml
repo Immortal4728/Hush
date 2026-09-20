@@ -1,0 +1,3 @@
+hush:
+  rate-limit:
+    enabled: false

@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: hush
+
+server:
+  port: 8088
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+hush:
+  cors:
+    allowed-origins: "http://localhost:5173,http://localhost:5174,http://localhost:5175,http://localhost:3000,http://localhost:*,http://127.0.0.1:*"
+  lifecycle:
+    check-interval-ms: 1000
+    expiring-warning-threshold-seconds: 60
+    empty-room-grace-period-seconds: 30
+  rate-limit:
+    trust-forwarded-for: false
+    cleanup-interval-seconds: 60
+    room-creation:
+      max-attempts: 5
+      window-seconds: 600
+    join-attempt:
+      max-attempts: 20
+      window-seconds: 60
+    message:
+      max-attempts: 10
+      window-seconds: 1
+    typing:
+      max-attempts: 5
+      window-seconds: 1
+    websocket:
+      max-connections: 1000
+
+
+

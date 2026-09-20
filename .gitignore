@@ -1,0 +1,23 @@
+# Java/Maven
+target/
+*.class
+*.jar
+*.war
+
+# Node/Frontend
+node_modules/
+dist/
+.env
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project Scratch Files
+scratch_*
+test_*

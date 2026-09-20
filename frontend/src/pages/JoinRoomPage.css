@@ -1,0 +1,44 @@
+.join-header {
+  margin-bottom: 1.5rem;
+}
+
+.join-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.join-desc {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.join-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.join-submit {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.875rem;
+}
+
+.join-footer {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.join-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.join-link:hover {
+  text-decoration: underline;
+}
