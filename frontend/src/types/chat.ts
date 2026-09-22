@@ -135,6 +135,11 @@ export interface WsRoomDestroyedEvent {
   reason: string;
 }
 
+export interface WsHistoryEvent {
+  type: 'HISTORY';
+  messages: WsMessageEvent[];
+}
+
 export type WsServerMessage =
   | WsJoinedEvent
   | WsMessageEvent
@@ -143,7 +148,8 @@ export type WsServerMessage =
   | WsSystemEvent
   | WsErrorEvent
   | WsRoomExpiringEvent
-  | WsRoomDestroyedEvent;
+  | WsRoomDestroyedEvent
+  | WsHistoryEvent;
 
 /* ── Frontend-only models ── */
 

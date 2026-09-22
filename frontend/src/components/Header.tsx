@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import './Header.css';
 
 export const Header: React.FC = () => {
@@ -12,7 +12,25 @@ export const Header: React.FC = () => {
         </Link>
 
         <nav className="header-nav">
-          <a href="#how-it-works" className="header-link">How it works</a>
+          <NavLink
+            to="/how-it-works"
+            className={({ isActive }) =>
+              `header-link ${isActive ? 'active' : ''}`
+            }
+          >
+            <span className="nav-text">How it works</span>
+            <span className="nav-indicator" aria-hidden="true" />
+          </NavLink>
+
+          <NavLink
+            to="/about"
+            className={({ isActive }) =>
+              `header-link ${isActive ? 'active' : ''}`
+            }
+          >
+            <span className="nav-text">About</span>
+            <span className="nav-indicator" aria-hidden="true" />
+          </NavLink>
         </nav>
       </div>
     </header>

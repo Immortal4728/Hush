@@ -46,6 +46,15 @@ export async function getRoom(code: string): Promise<RoomStatusResponse> {
   return handleResponse<RoomStatusResponse>(response);
 }
 
+export async function extendRoom(code: string, minutes: number): Promise<RoomStatusResponse> {
+  const response = await fetch(`${API_BASE}/rooms/${encodeURIComponent(code.toUpperCase())}/extend`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ minutes }),
+  });
+  return handleResponse<RoomStatusResponse>(response);
+}
+
 export async function checkHealth(): Promise<{ status: string; service: string }> {
   const response = await fetch(`${API_BASE}/health`);
   return handleResponse<{ status: string; service: string }>(response);

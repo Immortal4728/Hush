@@ -128,6 +128,24 @@ export function useWebSocket({ roomCode, username, onRoomDestroyed, onRoomExpiri
             break;
           }
 
+          case 'HISTORY': {
+            const historyMsgs: ChatMessage[] = (msg.messages || []).map((m) => ({
+              messageId: m.messageId,
+              senderId: m.senderId,
+              senderName: m.senderName,
+              text: m.text,
+              timestamp: m.timestamp
+            }));
+            setMessages((prev) => {
+              const existingIds = new Set(prev.map((p) => p.messageId));
+              const newFromHistory = historyMsgs.filter((h) => !existingIds.has(h.messageId));
+              return [...newFromHistory, ...prev].sort(
+                (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+              );
+            });
+            break;
+          }
+
           case 'MESSAGE': {
             const newMsg: ChatMessage = {
               messageId: msg.messageId,

@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Clock } from 'lucide-react';
 
 interface CountdownTimerProps {
   expiresAt: string;
   onExpire?: () => void;
+  className?: string;
 }
 
-export const CountdownTimer: React.FC<CountdownTimerProps> = ({ expiresAt, onExpire }) => {
+export const CountdownTimer: React.FC<CountdownTimerProps> = ({ expiresAt, onExpire, className = '' }) => {
   const [timeLeft, setTimeLeft] = useState<string>('--:--');
   const [isWarning, setIsWarning] = useState<boolean>(false);
 
@@ -41,15 +41,9 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({ expiresAt, onExp
   }, [expiresAt, onExpire]);
 
   return (
-    <div
-      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded text-xs font-mono border transition-colors ${
-        isWarning
-          ? 'border-white text-white bg-zinc-900 animate-pulse'
-          : 'border-[#27272a] text-[#a1a1aa] bg-[#09090b]'
-      }`}
-    >
-      <Clock className="w-3.5 h-3.5" />
-      <span>{timeLeft}</span>
-    </div>
+    <span className={`terminal-timer-display font-mono ${isWarning ? 'timer-warning' : 'timer-normal'} ${className}`}>
+      <span className="timer-symbol">◷</span>
+      <span className="timer-digits">{timeLeft}</span>
+    </span>
   );
 };

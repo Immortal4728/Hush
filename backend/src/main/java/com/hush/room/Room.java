@@ -2,11 +2,14 @@ package com.hush.room;
 
 import com.hush.exception.IllegalRoomStateException;
 import com.hush.exception.RoomFullException;
+import com.hush.message.ChatMessage;
 import com.hush.participant.Participant;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.regex.Pattern;
 
 public class Room {
@@ -17,12 +20,14 @@ public class Room {
     private final RoomType roomType;
     private final int maxParticipants;
     private final Instant createdAt;
-    private final Instant expiresAt;
+    private Instant expiresAt;
     private RoomState state;
 
     private Instant emptySince;
     private boolean expiringNotified;
 
+    private static final int MAX_ROOM_MESSAGES = 500;
+    private final Queue<ChatMessage> messages = new ConcurrentLinkedQueue<>();
     private final ConcurrentHashMap<String, Participant> participants = new ConcurrentHashMap<>();
 
     public Room(String roomCode, RoomType roomType, Instant createdAt, Instant expiresAt) {
@@ -39,6 +44,35 @@ public class Room {
         this.state = RoomState.ACTIVE;
         this.emptySince = null;
         this.expiringNotified = false;
+    }
+
+    public void addMessage(ChatMessage message) {
+        if (message == null) return;
+        if (this.state == RoomState.DESTROYED || isExpired()) return;
+        messages.add(message);
+        while (messages.size() > MAX_ROOM_MESSAGES) {
+            messages.poll();
+        }
+    }
+
+    public List<ChatMessage> getMessages() {
+        return List.copyOf(messages);
+    }
+
+    public void clearMessages() {
+        messages.clear();
+    }
+
+    public synchronized Instant extendExpiration(Duration additionalDuration) {
+        if (isExpired() || state == RoomState.DESTROYED) {
+            throw new IllegalRoomStateException("Cannot extend an expired or destroyed room.");
+        }
+        if (additionalDuration == null || additionalDuration.isZero() || additionalDuration.isNegative()) {
+            throw new IllegalArgumentException("Additional duration must be positive.");
+        }
+        this.expiresAt = this.expiresAt.plus(additionalDuration);
+        this.expiringNotified = false;
+        return this.expiresAt;
     }
 
     private static String validateRoomCode(String code) {
@@ -107,6 +141,7 @@ public class Room {
             return false;
         }
         this.state = RoomState.DESTROYED;
+        clearMessages();
         return true;
     }
 

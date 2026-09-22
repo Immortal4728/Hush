@@ -1,0 +1,144 @@
+/* HUSH — global terminal screen overlay: scanlines, pixel matrix, noise, flicker, tube curvature.
+   Sits above all UI (z-index: var(--z-scanlines) = 110) so the background and UI share the same CRT display response. */
+
+.crt-scan {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-scanlines);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* 1. Global Scanlines (over background AND UI) */
+.crt-scan__lines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.22) 0px,
+    rgba(0, 0, 0, 0.22) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  opacity: 0.9;
+}
+
+/* 2. Micro Pixel Structure Grid (shadow mask matrix) */
+.crt-scan__pixel-grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(0, 0, 0, 0.35) 25%, transparent 25%);
+  background-size: 3px 3px;
+  opacity: 0.25;
+}
+
+/* 3. Rolling CRT V-Sync Tracking Band */
+.crt-scan__band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 18%;
+  top: -20%;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(216, 211, 198, 0.025) 40%,
+    rgba(0, 0, 0, 0.08) 60%,
+    transparent
+  );
+  animation: crtBand 13s linear infinite;
+}
+
+@keyframes crtBand {
+  from { top: -20%; }
+  to   { top: 108%; }
+}
+
+/* 4. Subconscious Screen Power & Signal Flicker */
+.crt-scan__flicker {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.008);
+  animation: crtFlicker 6.2s step-end infinite;
+}
+
+@keyframes crtFlicker {
+  0%, 100% { opacity: 0; }
+  4%  { opacity: 1; }
+  6%  { opacity: 0; }
+  48% { opacity: 0.5; }
+  50% { opacity: 0; }
+  82% { opacity: 0.8; }
+  83% { opacity: 0; }
+}
+
+/* 5. Fine Video Static Noise Overlay */
+.crt-scan__noise {
+  position: absolute;
+  inset: -50px;
+  background-image: var(--noise-url);
+  opacity: 0.035;
+  animation: noiseJitter 0.3s steps(3) infinite;
+}
+
+/* 6. Deep Outer Vignette */
+.crt-scan__vignette {
+  position: absolute;
+  inset: 0;
+  box-shadow:
+    inset 0 0 120px rgba(0, 0, 0, 0.65),
+    inset 0 0 30px rgba(0, 0, 0, 0.45);
+}
+
+/* 7. CRT Tube Glass Bezel Curvature */
+.crt-scan__tube {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1px rgba(216, 211, 198, 0.05);
+  pointer-events: none;
+}
+
+/* 8. Intermittent Glitch Signal Tear Bar */
+.crt-scan__glitch-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(143, 189, 186, 0.22);
+  box-shadow: 
+    0 0 8px rgba(143, 189, 186, 0.35),
+    0 0 2px rgba(228, 88, 79, 0.25);
+  top: 35%;
+  opacity: 0;
+  pointer-events: none;
+  animation: glitchTear 7s cubic-bezier(0.1, 0.9, 0.2, 1) infinite;
+}
+
+@keyframes glitchTear {
+  0%, 88%, 100% {
+    opacity: 0;
+    transform: translateY(0) scaleY(1);
+  }
+  89% {
+    opacity: 0.75;
+    top: 25%;
+    transform: translateY(0) scaleY(1.6) skewX(-8deg);
+  }
+  90% {
+    opacity: 0;
+    top: 25%;
+  }
+  92% {
+    opacity: 0.8;
+    top: 68%;
+    transform: translateY(3px) scaleY(0.9) skewX(10deg);
+  }
+  94% {
+    opacity: 0.3;
+    top: 70%;
+  }
+  96% {
+    opacity: 0;
+  }
+}

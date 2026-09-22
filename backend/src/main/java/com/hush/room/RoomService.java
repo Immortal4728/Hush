@@ -49,6 +49,19 @@ public class RoomService {
         throw new IllegalStateException("Failed to generate a unique room code after " + MAX_COLLISION_RETRIES + " attempts");
     }
 
+    public Room extendRoom(String roomCode, Duration additionalDuration) {
+        String normalized = normalizeCode(roomCode);
+        if (normalized == null) {
+            throw new RoomNotFoundException("Room code must not be null or blank");
+        }
+        Room room = activeRooms.get(normalized);
+        if (room == null) {
+            throw new RoomNotFoundException("Room not found: " + roomCode);
+        }
+        room.extendExpiration(additionalDuration);
+        return room;
+    }
+
     public Optional<Room> findRoom(String roomCode) {
         String normalized = normalizeCode(roomCode);
         if (normalized == null) {

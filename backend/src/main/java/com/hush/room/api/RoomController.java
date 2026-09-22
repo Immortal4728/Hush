@@ -101,4 +101,17 @@ public class RoomController {
 
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/{roomCode}/extend")
+    public ResponseEntity<RoomStatusResponse> extendRoom(
+            @PathVariable String roomCode,
+            @Valid @RequestBody ExtendRoomRequest request) {
+
+        if (request == null || request.minutes() == null || request.minutes() <= 0 || request.minutes() > 1440) {
+            throw new IllegalArgumentException("Minutes must be a positive integer up to 1440.");
+        }
+
+        Room room = roomService.extendRoom(roomCode, Duration.ofMinutes(request.minutes()));
+        return ResponseEntity.ok(RoomStatusResponse.fromDomain(room));
+    }
 }

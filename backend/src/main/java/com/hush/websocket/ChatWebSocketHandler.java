@@ -152,6 +152,23 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         ));
         logger.info("[WS-DEBUG] JOINED SENT to session: {}", session.getId());
 
+        // 1.5. Send Ephemeral Room Message History to joining client
+        com.hush.room.Room currentRoom = roomService.findRoom(normalizedRoomCode).orElse(null);
+        if (currentRoom != null) {
+            List<ServerMessage.ChatMessageDto> historyDtos = currentRoom.getMessages().stream()
+                    .map(m -> new ServerMessage.ChatMessageDto(
+                            m.getMessageId(),
+                            m.getSenderId(),
+                            m.getSenderName(),
+                            m.getText(),
+                            m.getTimestamp().toString()
+                    ))
+                    .toList();
+            if (!historyDtos.isEmpty()) {
+                sendDirect(session, ServerMessage.history(historyDtos));
+            }
+        }
+
         // 2. Notify other participants via SYSTEM message
         Collection<WebSocketSession> otherSessions = sessionRegistry.getSessionsForRoomExcept(
                 normalizedRoomCode, participant.getParticipantId());
@@ -190,9 +207,10 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         String messageId = UUID.randomUUID().toString();
         Instant now = Instant.now();
 
-        // Validate ChatMessage domain model rules
+        // Validate ChatMessage domain model rules and store in room memory buffer
         try {
-            new ChatMessage(messageId, state.getParticipantId(), state.getUsername(), text, now);
+            ChatMessage domainMsg = new ChatMessage(messageId, state.getParticipantId(), state.getUsername(), text, now);
+            roomOpt.get().addMessage(domainMsg);
         } catch (IllegalArgumentException e) {
             sendDirect(session, ServerMessage.error("INVALID_MESSAGE", e.getMessage()));
             return;

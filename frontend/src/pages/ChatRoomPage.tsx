@@ -6,8 +6,17 @@ import { RoomHeader } from '../components/chat/RoomHeader';
 import { MessageList } from '../components/chat/MessageList';
 import { MessageComposer } from '../components/chat/MessageComposer';
 import { RoomSidebar } from '../components/chat/RoomSidebar';
-import type { RoomInfoResponse } from '../types';
+
+import { ModernRoomHeader } from '../components/chat/modern/ModernRoomHeader';
+import { ModernMessageList } from '../components/chat/modern/ModernMessageList';
+import { ModernMessageComposer } from '../components/chat/modern/ModernMessageComposer';
+import { ModernRoomSidebar } from '../components/chat/modern/ModernRoomSidebar';
+
+import { ExtendSessionModal } from '../components/chat/ExtendSessionModal';
+import { extendRoom } from '../services/roomApi';
+import type { ChatMessage, RoomInfoResponse } from '../types';
 import './ChatRoomPage.css';
+import './ModernChatRoom.css';
 
 export const ChatRoomPage: React.FC = () => {
   const { code } = useParams<{ code: string }>();
@@ -20,8 +29,24 @@ export const ChatRoomPage: React.FC = () => {
   });
   const [copied, setCopied] = useState<boolean>(false);
   const [roomInfo, setRoomInfo] = useState<RoomInfoResponse | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
+  const [isExtendModalOpen, setIsExtendModalOpen] = useState<boolean>(false);
+  const [localMessages, setLocalMessages] = useState<ChatMessage[]>([]);
   const isLeavingRef = useRef<boolean>(false);
+
+  const [uiMode, setUiMode] = useState<'MODERN' | 'TERMINAL'>(() => {
+    return (
+      (location.state as any)?.uiMode ||
+      (localStorage.getItem('hush_ui_mode') as 'MODERN' | 'TERMINAL') ||
+      'MODERN'
+    );
+  });
+
+  const toggleUiMode = () => {
+    const nextMode = uiMode === 'MODERN' ? 'TERMINAL' : 'MODERN';
+    setUiMode(nextMode);
+    localStorage.setItem('hush_ui_mode', nextMode);
+  };
 
   useEffect(() => {
     if (username) {
@@ -52,7 +77,7 @@ export const ChatRoomPage: React.FC = () => {
     status,
     participantId,
     participants,
-    messages,
+    messages: wsMessages,
     typingUsers,
     error,
     sendMessage,
@@ -65,12 +90,49 @@ export const ChatRoomPage: React.FC = () => {
     onRoomDestroyed: handleRoomDestroyed
   });
 
-  const handleLeave = () => {
+  const handleLeave = useCallback(() => {
     if (isLeavingRef.current) return;
     isLeavingRef.current = true;
     leave();
     sessionStorage.removeItem(`hush_user_${roomCode}`);
     navigate('/');
+  }, [leave, navigate, roomCode]);
+
+  const handleHomeNavigate = useCallback(() => {
+    if (!isLeavingRef.current) {
+      isLeavingRef.current = true;
+      leave();
+      sessionStorage.removeItem(`hush_user_${roomCode}`);
+    }
+    window.scrollTo(0, 0);
+    navigate('/', { replace: true });
+  }, [leave, navigate, roomCode]);
+
+  const handleExtendSession = async (minutes: number) => {
+    if (!roomCode) return;
+    const updatedRoom = await extendRoom(roomCode, minutes);
+    setRoomInfo(updatedRoom);
+
+    const formattedNewExp = new Date(updatedRoom.expiresAt).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+
+    const sysMsgText = uiMode === 'MODERN'
+      ? `Session extended by ${minutes} minutes`
+      : `[SYSTEM] SESSION EXTENDED\nAdditional time: ${minutes} minutes\nNew expiration: ${formattedNewExp}`;
+
+    const sysMsg: ChatMessage = {
+      messageId: `sys_ext_${Date.now()}`,
+      senderId: 'system',
+      senderName: 'hush',
+      text: sysMsgText,
+      timestamp: new Date().toISOString(),
+      isSystem: true,
+    };
+
+    setLocalMessages((prev) => [...prev, sysMsg]);
   };
 
   const copyCode = () => {
@@ -79,67 +141,178 @@ export const ChatRoomPage: React.FC = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const allMessages = [...wsMessages, ...localMessages];
+
+  const handleLocalCommand = (cmd: string) => {
+    const cleanCmd = cmd.trim().toLowerCase();
+    const now = new Date().toISOString();
+
+    if (cleanCmd === '/clear') {
+      setLocalMessages([]);
+      return;
+    }
+
+    if (cleanCmd === '/exit') {
+      handleLeave();
+      return;
+    }
+
+    let outputText = '';
+
+    if (cleanCmd === '/help') {
+      outputText = `[ AVAILABLE TERMINAL COMMANDS ]\n/help       - show available commands\n/peers      - show connected users\n/info       - show room parameters\n/clear      - clear terminal view\n/exit       - leave room`;
+    } else if (cleanCmd === '/peers') {
+      const peerListStr = participants
+        .map((p) => `● ${p.username}${p.participantId === participantId ? ' (You)' : ''}${p.isHost || p.host ? ' [HOST]' : ''}`)
+        .join('\n');
+      outputText = `## CONNECTED PEERS\n${peerListStr}\nROOM CAPACITY: ${participants.length} / ${roomInfo?.maxParticipants || 2}`;
+    } else if (cleanCmd === '/info') {
+      outputText = `## HUSH CHANNEL INFORMATION\nROOM_ID:    ${roomCode}\nTYPE:       ${roomInfo?.type || 'DIRECT'}\nPEERS:      ${participants.length} / ${roomInfo?.maxParticipants || 2}\nSTATUS:     ${status}\nENCRYPTION: ACTIVE`;
+    } else {
+      outputText = `[ SYS ] Unknown command: ${cmd}. Type /help for available commands.`;
+    }
+
+    const sysMsg: ChatMessage = {
+      messageId: `cmd_${Date.now()}`,
+      senderId: 'system',
+      senderName: 'hush',
+      text: outputText,
+      timestamp: now,
+      isSystem: true,
+    };
+
+    setLocalMessages((prev) => [...prev, sysMsg]);
+  };
+
+  const isModern = uiMode === 'MODERN';
+
   return (
-    <div className="chat-room-layout">
+    <div className={`chat-room-layout ${isModern ? 'modern-mode' : 'font-mono'}`}>
       {/* Header Bar */}
-      <RoomHeader
-        roomCode={roomCode}
-        status={status}
-        expiresAt={roomInfo?.expiresAt}
-        participantCount={participants.length}
-        onCopyCode={copyCode}
-        copied={copied}
-        onLeave={handleLeave}
-        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-        isSidebarOpen={isSidebarOpen}
-      />
+      {isModern ? (
+        <ModernRoomHeader
+          roomCode={roomCode}
+          status={status}
+          expiresAt={roomInfo?.expiresAt}
+          participantCount={participants.length}
+          onCopyCode={copyCode}
+          copied={copied}
+          onLeave={handleLeave}
+          onHomeNavigate={handleHomeNavigate}
+          onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+          isSidebarOpen={isSidebarOpen}
+          uiMode={uiMode}
+          onToggleUiMode={toggleUiMode}
+        />
+      ) : (
+        <RoomHeader
+          roomCode={roomCode}
+          status={status}
+          expiresAt={roomInfo?.expiresAt}
+          participantCount={participants.length}
+          onCopyCode={copyCode}
+          copied={copied}
+          onLeave={handleLeave}
+          onHomeNavigate={handleHomeNavigate}
+          onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+          isSidebarOpen={isSidebarOpen}
+          uiMode={uiMode}
+          onToggleUiMode={toggleUiMode}
+        />
+      )}
 
       {/* Main Workspace Layout */}
       <div className="chat-workspace">
         <main className="chat-main-area">
           {error && (
-            <div className="chat-error-banner font-mono flex items-center justify-between">
+            <div className={`chat-error-banner ${isModern ? 'font-sans' : 'font-mono'}`}>
               <div className="flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 shrink-0" />
-                <span>{error}</span>
+                <span>[ ERROR ] {error}</span>
               </div>
               {(status === 'DISCONNECTED' || status === 'RECONNECTING') && (
                 <button
                   onClick={manualRetry}
-                  className="px-2.5 py-1 bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 rounded text-xs text-red-200 transition-colors cursor-pointer ml-4"
+                  className="terminal-retry-btn"
                 >
-                  Retry Connection
+                  [ RETRY CONNECTION ]
                 </button>
               )}
             </div>
           )}
 
-          {/* Message Stream */}
-          <MessageList
-            messages={messages}
-            currentParticipantId={participantId}
-            typingUsers={typingUsers}
-            roomCode={roomCode}
-            participantCount={participants.length}
-          />
+          {/* Message Output Stream */}
+          {isModern ? (
+            <ModernMessageList
+              messages={allMessages}
+              currentParticipantId={participantId}
+              typingUsers={typingUsers}
+              roomCode={roomCode}
+              participantCount={participants.length}
+              onCopyCode={copyCode}
+              copied={copied}
+            />
+          ) : (
+            <MessageList
+              messages={allMessages}
+              currentParticipantId={participantId}
+              typingUsers={typingUsers}
+              roomCode={roomCode}
+              participantCount={participants.length}
+              username={username}
+              onCopyCode={copyCode}
+              copied={copied}
+            />
+          )}
 
-          {/* Message Input Composer */}
-          <MessageComposer
-            status={status}
-            onSendMessage={sendMessage}
-            onSendTyping={sendTyping}
-          />
+          {/* Shell / Message Composer */}
+          {isModern ? (
+            <ModernMessageComposer
+              status={status}
+              onSendMessage={sendMessage}
+              onSendTyping={sendTyping}
+              onLocalCommand={handleLocalCommand}
+            />
+          ) : (
+            <MessageComposer
+              username={username}
+              status={status}
+              onSendMessage={sendMessage}
+              onSendTyping={sendTyping}
+              onLocalCommand={handleLocalCommand}
+            />
+          )}
         </main>
 
         {/* Dedicated Room & People Sidebar */}
-        <RoomSidebar
-          participants={participants}
-          currentParticipantId={participantId}
-          roomInfo={roomInfo}
-          isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
-        />
+        {isModern ? (
+          <ModernRoomSidebar
+            participants={participants}
+            currentParticipantId={participantId}
+            roomInfo={roomInfo}
+            isOpen={isSidebarOpen}
+            onClose={() => setIsSidebarOpen(false)}
+            onOpenExtendModal={() => setIsExtendModalOpen(true)}
+          />
+        ) : (
+          <RoomSidebar
+            participants={participants}
+            currentParticipantId={participantId}
+            roomInfo={roomInfo}
+            isOpen={isSidebarOpen}
+            onClose={() => setIsSidebarOpen(false)}
+            onOpenExtendModal={() => setIsExtendModalOpen(true)}
+          />
+        )}
       </div>
+
+      {/* Session Extension Modal */}
+      <ExtendSessionModal
+        isOpen={isExtendModalOpen}
+        expiresAt={roomInfo?.expiresAt || new Date().toISOString()}
+        onClose={() => setIsExtendModalOpen(false)}
+        onExtend={handleExtendSession}
+      />
     </div>
   );
 };

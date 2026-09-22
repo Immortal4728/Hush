@@ -1,5 +1,4 @@
 import React from 'react';
-import { Users, Crown, ShieldCheck, Clock, X } from 'lucide-react';
 import { CountdownTimer } from '../CountdownTimer';
 import type { Participant, RoomInfoResponse } from '../../types';
 
@@ -9,6 +8,7 @@ interface RoomSidebarProps {
   roomInfo: RoomInfoResponse | null;
   isOpen: boolean;
   onClose: () => void;
+  onOpenExtendModal?: () => void;
 }
 
 export const RoomSidebar: React.FC<RoomSidebarProps> = ({
@@ -17,99 +17,106 @@ export const RoomSidebar: React.FC<RoomSidebarProps> = ({
   roomInfo,
   isOpen,
   onClose,
+  onOpenExtendModal,
 }) => {
   return (
     <>
       {/* Mobile Backdrop Overlay */}
       {isOpen && <div className="sidebar-backdrop sm:hidden" onClick={onClose} />}
 
-      <aside className={`room-sidebar ${isOpen ? 'open' : ''}`}>
-        <div className="sidebar-header sm:hidden">
-          <span className="font-mono text-xs text-zinc-400 font-bold uppercase">Room Info & Peers</span>
-          <button onClick={onClose} className="close-btn" type="button">
-            <X className="w-4 h-4" />
+      <aside className={`terminal-sidebar ${isOpen ? 'open' : ''} font-mono`}>
+        <div className="sidebar-header-bar font-mono">
+          <div className="sidebar-title-container font-mono">
+            <span className="sidebar-title-main">HUSH // SESSION</span>
+            <span className="sidebar-title-sub">DIAGNOSTICS</span>
+          </div>
+          <button onClick={onClose} className="terminal-close-btn" type="button" aria-label="Close diagnostics panel">
+            [ × ]
           </button>
         </div>
 
-        <div className="sidebar-content">
-          {/* SECTION 1: PEOPLE */}
+        <div className="sidebar-content font-mono">
+          {/* SECTION 1: SESSION */}
           <section className="sidebar-section">
-            <h4 className="section-title font-mono flex items-center gap-2">
-              <Users className="w-3.5 h-3.5 text-zinc-400" />
-              PEOPLE ({participants.length})
-            </h4>
+            <div className="section-title">SESSION</div>
+            <div className="section-subtitle">CONNECTED PEERS ({participants.length})</div>
 
-            <div className="participant-list font-mono text-xs">
+            <div className="participant-list font-mono mt-1">
               {participants.map((p) => {
                 const isMe = p.participantId === currentParticipantId;
                 const isHost = p.host || p.isHost;
 
                 return (
-                  <div
-                    key={p.participantId}
-                    className={`participant-item ${isMe ? 'is-self' : ''}`}
-                  >
+                  <div key={p.participantId} className={`participant-item ${isMe ? 'is-self' : ''}`}>
                     <div className="participant-info">
                       <span className="user-dot" />
-                      <span className="participant-name truncate">
+                      <span className="participant-name">
                         {p.username} {isMe ? '(You)' : ''}
                       </span>
                     </div>
-
-                    {isHost && (
-                      <span className="host-badge" title="Room Host">
-                        <Crown className="w-3 h-3 text-amber-400 shrink-0" />
-                        <span className="host-text">HOST</span>
-                      </span>
-                    )}
+                    {isHost && <span className="host-tag">[HOST]</span>}
                   </div>
                 );
               })}
             </div>
           </section>
 
+          <div className="sidebar-divider" />
+
           {/* SECTION 2: ROOM */}
           <section className="sidebar-section">
-            <h4 className="section-title font-mono flex items-center gap-2">
-              <Clock className="w-3.5 h-3.5 text-zinc-400" />
-              ROOM
-            </h4>
+            <div className="section-title">ROOM</div>
 
-            <div className="room-meta-card font-mono text-xs space-y-2">
-              <div className="meta-row">
-                <span className="meta-label">TYPE</span>
-                <span className="meta-val font-bold text-white">{roomInfo?.type || 'DIRECT'}</span>
+            <div className="room-param-grid font-mono">
+              <div className="param-row">
+                <span className="param-label">ROOM_ID</span>
+                <span className="param-val sys-ok">{roomInfo?.roomCode || 'ACTIVE'}</span>
               </div>
 
-              <div className="meta-row">
-                <span className="meta-label">CAPACITY</span>
-                <span className="meta-val">
+              <div className="param-row">
+                <span className="param-label">TYPE</span>
+                <span className="param-val">{roomInfo?.type || 'DIRECT'}</span>
+              </div>
+
+              <div className="param-row">
+                <span className="param-label">CAPACITY</span>
+                <span className="param-val">
                   {participants.length} / {roomInfo?.maxParticipants || 2}
                 </span>
               </div>
-
-              {roomInfo?.expiresAt && (
-                <div className="meta-row">
-                  <span className="meta-label">EXPIRES IN</span>
-                  <div className="meta-val font-mono text-emerald-400">
-                    <CountdownTimer expiresAt={roomInfo.expiresAt} />
-                  </div>
-                </div>
-              )}
             </div>
+
+            {roomInfo?.expiresAt && (
+              <div className="expiration-box font-mono mt-2">
+                <div className="param-label">EXPIRES IN</div>
+                <div className="expires-timer-wrapper">
+                  <CountdownTimer expiresAt={roomInfo.expiresAt} />
+                </div>
+                <button
+                  type="button"
+                  onClick={onOpenExtendModal}
+                  className="terminal-extend-btn font-mono mt-2"
+                  title="Extend session duration"
+                >
+                  [ EXTEND SESSION ]
+                </button>
+              </div>
+            )}
           </section>
+
+          <div className="sidebar-divider" />
 
           {/* SECTION 3: PRIVACY */}
           <section className="sidebar-section privacy-section">
-            <h4 className="section-title font-mono flex items-center gap-2 text-emerald-400">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              PRIVACY
-            </h4>
+            <div className="section-title">PRIVACY</div>
 
-            <div className="privacy-card">
-              <span className="privacy-badge font-mono">ZERO-LOG MEMORY</span>
-              <p className="privacy-desc">
-                Messages exist only while this room is alive. Once closed or expired, everything disappears permanently.
+            <div className="privacy-block font-mono">
+              <div className="privacy-badge sys-ok">ZERO-LOG MEMORY</div>
+              <p className="privacy-text mt-1">
+                Messages exist only while this channel is alive.
+              </p>
+              <p className="privacy-text muted">
+                Once closed or expired, everything disappears permanently.
               </p>
             </div>
           </section>

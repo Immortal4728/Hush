@@ -1,7 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Shield, Copy, Check, Users } from 'lucide-react';
+import React, { useEffect, useRef } from 'react';
 import { MessageBubble } from './MessageBubble';
-import { TypingIndicator } from './TypingIndicator';
 import type { ChatMessage } from '../../types';
 
 interface MessageListProps {
@@ -10,6 +8,9 @@ interface MessageListProps {
   typingUsers: string[];
   roomCode: string;
   participantCount: number;
+  username: string;
+  onCopyCode: () => void;
+  copied: boolean;
 }
 
 export const MessageList: React.FC<MessageListProps> = ({
@@ -18,78 +19,75 @@ export const MessageList: React.FC<MessageListProps> = ({
   typingUsers,
   roomCode,
   participantCount,
+  username,
+  onCopyCode,
+  copied,
 }) => {
   const bottomRef = useRef<HTMLDivElement>(null);
-  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, typingUsers]);
 
-  const copyCode = async () => {
-    try {
-      await navigator.clipboard.writeText(roomCode);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Fallback
-    }
-  };
-
-  const isAlone = participantCount <= 1 && messages.length === 0;
+  const isAlone = participantCount <= 1;
 
   return (
-    <div className="message-list-container">
-      {isAlone ? (
-        <div className="empty-chat-state">
-          <div className="shield-icon-wrapper">
-            <Users className="w-6 h-6 text-emerald-400" />
-          </div>
-          <h3 className="empty-title font-mono">Waiting for someone to join</h3>
-          <p className="empty-desc">
-            Share this room code with someone to start chatting.
-          </p>
+    <div className="terminal-stream-container font-mono">
+      {/* Terminal Initialization Sequence */}
+      <div className="terminal-boot-log font-mono">
+        <div className="boot-line boot-title">HUSH TEMPORARY COMMUNICATION SYSTEM</div>
+        <div className="boot-line mt-1">Initializing secure channel...</div>
+        <div className="boot-line sys-ok">[ OK ] CLIENT INITIALIZED</div>
+        <div className="boot-line sys-ok">[ OK ] ROOM FOUND</div>
+        <div className="boot-line sys-ok">[ OK ] IDENTITY ASSIGNED: {username || 'anonymous'}</div>
+        <div className="boot-line sys-ok">[ OK ] PEER CHANNEL AVAILABLE</div>
+        <div className="boot-line sys-ok">[ OK ] ENCRYPTION ACTIVE</div>
+        <div className="boot-line boot-meta mt-1">SESSION ID: {roomCode}</div>
+        <div className="boot-line boot-status">Connection established.</div>
+      </div>
 
-          <div className="code-copy-card font-mono">
-            <span className="code-label">ROOM CODE</span>
-            <span className="code-value">{roomCode}</span>
+      <div className="terminal-divider">──────</div>
+
+      {/* Waiting state line if alone */}
+      {isAlone && messages.length === 0 && (
+        <div className="terminal-alone-box">
+          <div className="boot-line sys-ok">[ OK ] CHANNEL ESTABLISHED</div>
+          <div className="boot-line sys-info">[ INFO ] WAITING FOR PEER TO CONNECT...</div>
+          <div className="boot-line sys-info flex items-center gap-2 mt-1">
+            <span>[ INFO ] SHARE ROOM CODE:</span>
+            <span className="room-code-highlight">{roomCode}</span>
             <button
-              onClick={copyCode}
-              className="copy-code-btn"
+              onClick={onCopyCode}
               type="button"
+              className="terminal-copy-btn"
             >
-              {copied ? (
-                <>
-                  <Check className="w-4 h-4 text-emerald-400" />
-                  <span>COPIED</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-4 h-4" />
-                  <span>COPY CODE</span>
-                </>
-              )}
+              {copied ? '[ COPIED ]' : '[ COPY ]'}
             </button>
           </div>
-
-          <div className="privacy-pill font-mono">
-            <Shield className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Zero-log memory • Nothing saved</span>
-          </div>
-        </div>
-      ) : (
-        <div className="messages-stream">
-          {messages.map((msg) => (
-            <MessageBubble
-              key={msg.messageId}
-              message={msg}
-              isSelf={msg.senderId === currentParticipantId}
-            />
-          ))}
         </div>
       )}
 
-      <TypingIndicator typingUsers={typingUsers} />
+      {/* Message Stream */}
+      <div className="terminal-messages font-mono">
+        {messages.map((msg) => (
+          <MessageBubble
+            key={msg.messageId}
+            message={msg}
+            isSelf={msg.senderId === currentParticipantId}
+          />
+        ))}
+      </div>
+
+      {/* Typing Line */}
+      {typingUsers.length > 0 && (
+        <div className="terminal-line terminal-line--typing sys-info font-mono">
+          <span className="line-prefix">[ TYPING ]</span>
+          <span className="line-content">
+            {typingUsers.join(', ')} {typingUsers.length === 1 ? 'is' : 'are'} typing...
+          </span>
+        </div>
+      )}
+
       <div ref={bottomRef} />
     </div>
   );

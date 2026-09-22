@@ -1,0 +1,97 @@
+.retro-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 90% at 50% 0%, #111116 0%, var(--void) 62%),
+    var(--void);
+}
+
+.retro-bg__layer {
+  position: absolute;
+  inset: -6%;
+  transform: translate3d(
+    calc(var(--parallax-x, 0) * 10px),
+    calc(var(--parallax-y, 0) * 6px),
+    0
+  );
+  transition: transform 0.6s cubic-bezier(0.2, 0.6, 0.3, 1);
+}
+
+.retro-bg__forest {
+  position: absolute;
+  inset: -5%;
+  background-image: url('/horror_bg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.65;
+  filter: contrast(1.1) sepia(0.3) hue-rotate(180deg) brightness(0.6) blur(1px);
+}
+
+/* Very slow fog drift */
+.retro-bg__forest::after {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.05), transparent 60%);
+  animation: fogDrift 30s infinite alternate ease-in-out;
+  pointer-events: none;
+}
+
+@keyframes fogDrift {
+  0% { transform: translate(-5%, -5%) scale(1); }
+  100% { transform: translate(5%, 5%) scale(1.1); }
+}
+
+/* analog grain */
+.retro-bg__noise {
+  position: absolute;
+  inset: -100px;
+  background-image: var(--noise-url);
+  background-size: 240px 240px;
+  opacity: 0.05;
+  animation: noiseJitter 0.9s steps(4) infinite;
+}
+
+/* scanlines */
+.retro-bg__scanlines {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent 50%,
+    rgba(0, 0, 0, 0.25) 51%
+  );
+  background-size: 100% 4px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* vignette */
+.retro-bg__vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(140% 100% at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
+  z-index: 20;
+}
+
+/* VHS tracking distortion */
+.retro-bg__distortion {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: rgba(255,255,255,0.01);
+  mix-blend-mode: overlay;
+  z-index: 15;
+  animation: vhsTracking 12s infinite linear;
+}
+
+@keyframes vhsTracking {
+  0%, 90% { transform: translateY(-100%); opacity: 0; }
+  92% { opacity: 0.15; background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.1) 50%, transparent); }
+  95% { opacity: 0; }
+  100% { transform: translateY(100%); opacity: 0; }
+}

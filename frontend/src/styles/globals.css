@@ -1,7 +1,13 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
-@import './variables.css';
+/* ════════════════════════════════════════════════════════════
+   HUSH — retro cinematic glitch base
+   analog / CRT / VHS terminal aesthetic
+   ════════════════════════════════════════════════════════════ */
 
-*, *::before, *::after {
+@import url('./variables.css');
+
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -9,21 +15,23 @@
 
 html {
   font-size: 16px;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  background: var(--void);
 }
 
 body {
-  background-color: var(--bg);
-  color: var(--text-primary);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--void);
+  color: var(--ink);
+  font-family: var(--font-mono);
   min-height: 100vh;
   overflow-x: hidden;
   line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-code, .font-mono {
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+::selection {
+  background: rgba(var(--glitch-c), 0.28);
+  color: var(--ink);
 }
 
 a {
@@ -39,17 +47,32 @@ button {
   color: inherit;
 }
 
-input, textarea {
+input,
+textarea {
   font-family: inherit;
   color: inherit;
 }
 
-/* ── Layout ── */
+/* ── font utilities ─────────────────────────────────────── */
+
+.font-crt     { font-family: var(--font-crt); }
+.font-mono    { font-family: var(--font-mono); }
+.font-display { font-family: var(--font-display); }
+
+.hush-display {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  line-height: 0.92;
+  letter-spacing: 0.02em;
+}
+
+/* ── layout helpers ─────────────────────────────────────── */
 
 .page {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .page-center {
@@ -58,249 +81,182 @@ input, textarea {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem 1.5rem;
+  padding: 2rem 1.25rem;
+  position: relative;
+  z-index: var(--z-content);
 }
 
-.container {
+/* CRT power-on reveal — applied to page roots.
+   Ends at transform:none / filter:none so fixed children
+   return to viewport positioning after the animation. */
+.page-enter {
+  animation: crtPowerOn 0.8s cubic-bezier(0.19, 1, 0.22, 1) both;
+}
+
+@keyframes crtPowerOn {
+  0% { 
+    opacity: 1; 
+    transform: scale(0.005, 0.002); 
+    filter: brightness(8) blur(1px) contrast(4);
+    background: #ffffff;
+    box-shadow: 0 0 120px 60px rgba(255, 255, 255, 1);
+  }
+  20% {
+    transform: scale(0.9, 0.004); 
+    filter: brightness(5) blur(1px) contrast(3);
+    background: #ffffff;
+    box-shadow: 0 0 80px 40px rgba(255, 255, 255, 0.8);
+  }
+  40% {
+    transform: scale(1.02, 0.03);
+    filter: brightness(2.5) contrast(1.8);
+    background: rgba(255, 255, 255, 0.4);
+  }
+  65% {
+    transform: scale(1.01, 1.05);
+    filter: brightness(1.3) contrast(1.2);
+    background: transparent;
+  }
+  85% {
+    transform: scale(0.996, 0.996);
+    filter: brightness(1.08);
+  }
+  100% { 
+    opacity: 1; 
+    transform: none; 
+    filter: none;
+    background: transparent;
+  }
+}
+
+/* ── system panel primitive ─────────────────────────────── */
+
+.sys-panel {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+}
+
+.sys-panel::before,
+.sys-panel::after {
+  content: '';
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  pointer-events: none;
+}
+
+.sys-panel::before { top: -1px; left: -1px; border-top: 1px solid var(--ink-dim); border-left: 1px solid var(--ink-dim); }
+.sys-panel::after  { bottom: -1px; right: -1px; border-bottom: 1px solid var(--ink-dim); border-right: 1px solid var(--ink-dim); }
+
+.sys-label {
+  display: block;
+  font-family: var(--font-crt);
+  font-size: 0.95rem;
+  line-height: 1;
+  color: var(--ink-faint);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+/* ── terminal input primitive ───────────────────────────── */
+
+.retro-input {
   width: 100%;
-  max-width: 480px;
-}
-
-/* ── Card / Surface ── */
-
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 2rem;
-  transition: border-color var(--transition);
-}
-
-.card:hover {
-  border-color: var(--border-hover);
-}
-
-/* ── Buttons ── */
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.38);
+  border: 1px solid var(--line);
+  padding: 0.68rem 0.9rem;
+  color: var(--ink);
   font-size: 0.875rem;
-  font-weight: 500;
-  transition: all var(--transition);
-  border: 1px solid transparent;
   outline: none;
+  caret-color: var(--phosphor);
+  transition: border-color var(--transition), background var(--transition);
+}
+
+.retro-input:focus {
+  border-color: rgba(var(--glitch-c), 0.45);
+  background: rgba(0, 0, 0, 0.52);
+}
+
+.retro-input::placeholder {
+  color: var(--ink-faint);
+}
+
+/* ── live system clock ──────────────────────────────────── */
+
+.sys-clock {
+  font-family: var(--font-crt);
+  font-size: 0.95rem;
+  letter-spacing: 0.18em;
+  color: var(--ink-faint);
   white-space: nowrap;
 }
 
-.btn:focus-visible {
-  outline: 2px solid var(--accent);
+/* ── scrollbar ──────────────────────────────────────────── */
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(216, 211, 198, 0.13); }
+::-webkit-scrollbar-thumb:hover { background: rgba(216, 211, 198, 0.24); }
+
+/* ── focus ──────────────────────────────────────────────── */
+
+:focus-visible {
+  outline: 1px solid rgba(var(--glitch-c), 0.55);
   outline-offset: 2px;
 }
 
-.btn-primary {
-  background: var(--accent);
-  color: #fff;
-  border-color: var(--accent);
-}
+/* ── shared keyframes ───────────────────────────────────── */
 
-.btn-primary:hover:not(:disabled) {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
-}
-
-.btn-primary:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.btn-secondary {
-  background: transparent;
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background: var(--surface-hover);
-  border-color: var(--border-hover);
-}
-
-.btn-ghost {
-  background: transparent;
-  color: var(--text-secondary);
-  padding: 0.5rem 0.75rem;
-}
-
-.btn-ghost:hover {
-  color: var(--text-primary);
-  background: var(--surface-hover);
-}
-
-.btn-danger {
-  background: transparent;
-  color: var(--danger);
-  border: 1px solid rgba(255, 92, 108, 0.25);
-  padding: 0.5rem 1rem;
-  font-size: 0.8125rem;
-}
-
-.btn-danger:hover {
-  background: rgba(255, 92, 108, 0.08);
-  border-color: var(--danger);
-}
-
-/* ── Inputs ── */
-
-.input {
-  width: 100%;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 0.75rem 1rem;
-  color: var(--text-primary);
-  font-size: 0.875rem;
-  outline: none;
-  transition: border-color var(--transition);
-}
-
-.input:focus {
-  border-color: var(--accent);
-}
-
-.input::placeholder {
-  color: var(--text-muted);
-}
-
-.input-code {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 1.5rem;
-  letter-spacing: 0.3em;
-  text-align: center;
-  text-transform: uppercase;
-  padding: 0.875rem 1rem;
-}
-
-/* ── Label ── */
-
-.label {
-  display: block;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  margin-bottom: 0.5rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-/* ── Pill selectors ── */
-
-.pill-group {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.pill {
-  flex: 1;
-  padding: 0.75rem;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--text-secondary);
-  font-size: 0.8125rem;
-  font-weight: 500;
-  text-align: center;
-  transition: all var(--transition);
-  cursor: pointer;
-}
-
-.pill:hover {
-  border-color: var(--border-hover);
-  color: var(--text-primary);
-}
-
-.pill.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-  font-weight: 600;
-}
-
-.pill:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-/* ── Error alert ── */
-
-.alert-error {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border-radius: var(--radius-sm);
-  background: rgba(255, 92, 108, 0.08);
-  border: 1px solid rgba(255, 92, 108, 0.25);
-  color: var(--danger);
-  font-size: 0.8125rem;
-  margin-bottom: 1rem;
-}
-
-.alert-warning {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: var(--radius-sm);
-  background: rgba(124, 92, 252, 0.06);
-  border: 1px solid rgba(124, 92, 252, 0.2);
-  color: var(--accent);
-  font-size: 0.75rem;
-}
-
-/* ── Scrollbar ── */
-
-::-webkit-scrollbar {
-  width: 5px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--border-hover);
-}
-
-/* ── Animations ── */
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes pulse-dot {
+@keyframes blinkSoft {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  50% { opacity: 0.25; }
 }
 
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease forwards;
+@keyframes blinkCaret {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
 }
 
-.animate-slideUp {
-  animation: slideUp 0.35s ease forwards;
+@keyframes glitchShift {
+  0% { translate: -3px 0; }
+  40% { translate: 2px 0; }
+  75% { translate: -1px 0; }
+  100% { translate: 0 0; }
+}
+
+@keyframes noiseJitter {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-38px, 22px); }
+  50% { transform: translate(24px, -30px); }
+  75% { transform: translate(-18px, -14px); }
+  100% { transform: translate(0, 0); }
+}
+
+/* ── root-level & element-level sparse VHS glitch animations ── */
+
+.hush-vhs, #root.hush-vhs { animation: hushVhsSparse 8s infinite; }
+
+@keyframes hushVhsSparse {
+  0%, 88% { transform: translate3d(0, 0, 0); filter: none; }
+  89% { filter: brightness(0.7) contrast(1.1); }
+  90%, 93% { transform: translate3d(0, 0, 0); filter: none; }
+  94% { transform: translate3d(-3px, 1px, 0) skewX(0.3deg); filter: saturate(1.4) contrast(1.05); }
+  96% { transform: translate3d(2px, -1px, 0) skewX(-0.2deg); filter: saturate(1.2); }
+  98% { transform: translate3d(-1px, 0, 0); filter: brightness(1.1); }
+  100% { transform: translate3d(0, 0, 0); filter: none; }
+}
+
+/* ── reduced motion: kill heavy animation, keep identity ── */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

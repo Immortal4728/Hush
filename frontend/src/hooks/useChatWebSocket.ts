@@ -98,6 +98,25 @@ export function useChatWebSocket({
           myParticipantIdRef.current = data.participantId;
           break;
         }
+        case 'HISTORY': {
+          if ('messages' in data && Array.isArray(data.messages)) {
+            const historyMsgs: ChatMessage[] = data.messages.map((m) => ({
+              messageId: m.messageId,
+              senderId: m.senderId,
+              senderName: m.senderName,
+              text: m.text,
+              timestamp: m.timestamp,
+            }));
+            setMessages((prev) => {
+              const existingIds = new Set(prev.map((p) => p.messageId));
+              const newFromHistory = historyMsgs.filter((h) => !existingIds.has(h.messageId));
+              return [...newFromHistory, ...prev].sort(
+                (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+              );
+            });
+          }
+          break;
+        }
         case 'MESSAGE': {
           const msg: ChatMessage = {
             messageId: data.messageId,
@@ -106,7 +125,7 @@ export function useChatWebSocket({
             text: data.text,
             timestamp: data.timestamp,
           };
-          setMessages(prev => [...prev, msg]);
+          setMessages(prev => (prev.some((m) => m.messageId === msg.messageId) ? prev : [...prev, msg]));
           break;
         }
         case 'TYPING': {

@@ -1,29 +1,43 @@
-import React, { useState, useRef } from 'react';
-import { Send } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
 import type { ConnectionStatus } from '../../hooks/useWebSocket';
 
 interface MessageComposerProps {
+  username: string;
   status: ConnectionStatus;
   onSendMessage: (text: string) => void;
   onSendTyping: (typing: boolean) => void;
+  onLocalCommand?: (command: string) => void;
 }
 
 export const MessageComposer: React.FC<MessageComposerProps> = ({
+  username,
   status,
   onSendMessage,
   onSendTyping,
+  onLocalCommand,
 }) => {
   const [inputText, setInputText] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTypingSentRef = useRef<number>(0);
 
   const isConnected = status === 'CONNECTED';
+  const promptName = username ? username.toLowerCase().replace(/\s+/g, '_') : 'user';
+
+  useEffect(() => {
+    textareaRef.current?.focus();
+  }, []);
 
   const handleSend = () => {
     const trimmed = inputText.trim();
     if (!trimmed || !isConnected) return;
 
-    onSendMessage(trimmed);
+    if (trimmed.startsWith('/') && onLocalCommand) {
+      onLocalCommand(trimmed);
+    } else {
+      onSendMessage(trimmed);
+    }
+
     setInputText('');
     onSendTyping(false);
     lastTypingSentRef.current = 0;
@@ -60,40 +74,37 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
   };
 
   return (
-    <div className="message-composer-wrapper">
-      <form onSubmit={handleSubmit} className="message-composer-form">
-        <div className="input-container">
+    <div className="terminal-composer" onClick={() => textareaRef.current?.focus()}>
+      <form onSubmit={handleSubmit} className="composer-shell-line font-mono">
+        <span className="composer-prompt">
+          <span className="prompt-name">{promptName}</span>
+          <span className="prompt-host">@hush</span>
+          <span className="prompt-symbol">:~$</span>
+        </span>
+
+        <div className="composer-input-area">
           <textarea
+            ref={textareaRef}
             value={inputText}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             placeholder={
               isConnected
-                ? 'Type a message... (Enter to send, Shift+Enter for newline)'
+                ? 'type a message or /help...'
                 : status === 'CONNECTING'
-                ? 'Connecting to server...'
+                ? 'connecting to server...'
                 : status === 'RECONNECTING'
-                ? 'Reconnecting to server...'
-                : 'Disconnected'
+                ? 'reconnecting to server...'
+                : 'disconnected'
             }
             disabled={!isConnected}
             maxLength={2000}
             rows={1}
-            className="composer-textarea font-mono"
+            className="shell-textarea font-mono"
+            aria-label="Terminal prompt input"
           />
-          <span className="char-counter font-mono">
-            {inputText.length} / 2000
-          </span>
+          <span className="cursor-block" aria-hidden="true">█</span>
         </div>
-
-        <button
-          type="submit"
-          disabled={!isConnected || !inputText.trim()}
-          className="composer-send-btn font-mono"
-          title="Send message (Enter)"
-        >
-          <Send className="w-4 h-4" />
-        </button>
       </form>
     </div>
   );

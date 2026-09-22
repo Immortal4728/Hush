@@ -1,6 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Copy, Check, LogOut, Users, Shield } from 'lucide-react';
 import { CountdownTimer } from '../CountdownTimer';
 import type { ConnectionStatus } from '../../hooks/useWebSocket';
 
@@ -12,8 +10,11 @@ interface RoomHeaderProps {
   onCopyCode: () => void;
   copied: boolean;
   onLeave: () => void;
+  onHomeNavigate: () => void;
   onToggleSidebar: () => void;
   isSidebarOpen: boolean;
+  uiMode?: 'MODERN' | 'TERMINAL';
+  onToggleUiMode?: () => void;
 }
 
 export const RoomHeader: React.FC<RoomHeaderProps> = ({
@@ -24,95 +25,81 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
   onCopyCode,
   copied,
   onLeave,
+  onHomeNavigate,
   onToggleSidebar,
   isSidebarOpen,
+  uiMode,
+  onToggleUiMode,
 }) => {
-  const renderStatusBadge = () => {
-    switch (status) {
-      case 'CONNECTED':
-        return (
-          <span className="status-pill status-connected">
-            <span className="status-dot green" />
-            CONNECTED
-          </span>
-        );
-      case 'CONNECTING':
-        return (
-          <span className="status-pill status-connecting">
-            <span className="status-dot yellow animate-pulse" />
-            CONNECTING...
-          </span>
-        );
-      case 'RECONNECTING':
-        return (
-          <span className="status-pill status-reconnecting">
-            <span className="status-dot yellow animate-pulse" />
-            RECONNECTING...
-          </span>
-        );
-      case 'EXPIRING':
-        return (
-          <span className="status-pill status-expiring">
-            <span className="status-dot orange" />
-            EXPIRING SOON
-          </span>
-        );
-      default:
-        return (
-          <span className="status-pill status-disconnected">
-            <span className="status-dot red" />
-            DISCONNECTED
-          </span>
-        );
-    }
-  };
+  const isConnected = status === 'CONNECTED';
+  const statusColorClass = isConnected ? 'sys-ok' : status === 'EXPIRING' ? 'sys-warn' : 'sys-error';
 
   return (
-    <header className="chat-header">
+    <header className="terminal-header font-mono">
       <div className="header-left">
-        <Link to="/" className="brand-link">
-          <Shield className="brand-icon" />
-          <span className="brand-name font-mono">HUSH</span>
-        </Link>
+        {/* HUSH logo navigates home directly and cleans up session state */}
+        <button
+          onClick={onHomeNavigate}
+          className="brand-link-btn font-mono"
+          type="button"
+          title="Navigate Home"
+        >
+          <span className="header-brand-tag">HUSH</span>
+          <span className="header-sub-tag hidden md:inline">// TERMINAL SESSION</span>
+        </button>
 
-        <div className="room-code-badge">
-          <span className="code-prefix">ROOM</span>
-          <span className="code-text font-mono">{roomCode}</span>
+        <div className="terminal-badge">
+          <span className="badge-label">ROOM_ID:</span>
+          <span className="badge-val">{roomCode}</span>
           <button
             onClick={onCopyCode}
-            className="copy-btn"
+            className="terminal-copy-btn"
             title="Copy room code"
             type="button"
           >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+            {copied ? '[COPIED]' : '[COPY]'}
           </button>
         </div>
 
-        <div className="hidden sm:flex items-center">
-          {renderStatusBadge()}
+        <div className={`status-indicator ${statusColorClass}`}>
+          <span className="status-dot" />
+          <span className="status-text">{status}</span>
         </div>
       </div>
 
       <div className="header-right">
         {expiresAt && (
-          <div className="countdown-wrapper font-mono">
+          <div className="countdown-container font-mono">
             <CountdownTimer expiresAt={expiresAt} />
           </div>
         )}
 
+        <span className="header-stat-item hidden sm:inline-block font-mono">
+          [ PEERS: {participantCount} ]
+        </span>
+
+        {onToggleUiMode && (
+          <button
+            onClick={onToggleUiMode}
+            className="terminal-nav-btn font-mono"
+            type="button"
+            title="Switch visual mode"
+          >
+            <span>[ MODE: {uiMode || 'TERMINAL'} ]</span>
+          </button>
+        )}
+
         <button
           onClick={onToggleSidebar}
-          className={`sidebar-toggle-btn ${isSidebarOpen ? 'active' : ''}`}
+          className={`terminal-nav-btn ${isSidebarOpen ? 'active' : ''}`}
           type="button"
-          title="Toggle People & Info"
+          title="Toggle Diagnostics Sidebar"
         >
-          <Users className="w-4 h-4" />
-          <span className="font-mono text-xs">{participantCount}</span>
+          <span>[ SIDEBAR ]</span>
         </button>
 
-        <button onClick={onLeave} className="leave-btn font-mono" type="button">
-          <LogOut className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">LEAVE</span>
+        <button onClick={onLeave} className="terminal-exit-btn" type="button">
+          <span>[ EXIT ]</span>
         </button>
       </div>
     </header>

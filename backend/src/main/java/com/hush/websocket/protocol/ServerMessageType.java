@@ -8,5 +8,6 @@ public enum ServerMessageType {
     SYSTEM,
     ERROR,
     ROOM_EXPIRING,
-    ROOM_DESTROYED
+    ROOM_DESTROYED,
+    HISTORY
 }

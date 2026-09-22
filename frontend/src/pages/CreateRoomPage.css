@@ -1,82 +1,325 @@
+/* HUSH — Terminal Form Panel & Control System */
+
+.terminal-panel {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  background: rgba(8, 8, 12, 0.90);
+  border: 1px solid var(--line-strong);
+  padding: 2.25rem 2rem;
+  box-shadow: 
+    0 20px 50px rgba(0, 0, 0, 0.75),
+    inset 0 0 15px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+}
+
+/* Small retro corner markers */
+.panel-corner {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border: 1px solid var(--line-strong);
+  pointer-events: none;
+}
+.corner-tl { top: -1px; left: -1px; border-right: none; border-bottom: none; border-color: var(--crt-red-bright); }
+.corner-tr { top: -1px; right: -1px; border-left: none; border-bottom: none; }
+.corner-bl { bottom: -1px; left: -1px; border-right: none; border-top: none; }
+.corner-br { bottom: -1px; right: -1px; border-left: none; border-top: none; border-color: var(--phosphor); }
+
+/* Headers & Hierarchy */
 .create-header {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.75rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px dotted var(--line);
 }
 
 .create-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 0.25rem;
+  font-family: var(--font-display);
+  font-size: 1.65rem;
+  color: var(--ink);
+  letter-spacing: 0.05em;
+  line-height: 1.1;
+  margin-bottom: 0.35rem;
+  text-transform: uppercase;
 }
 
 .create-desc {
-  font-size: 0.8125rem;
-  color: var(--text-secondary);
+  font-family: var(--font-crt);
+  font-size: 0.95rem;
+  color: var(--ink-dim);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
+/* Alert banner */
+.terminal-alert {
+  background: rgba(194, 65, 59, 0.14);
+  border: 1px solid rgba(228, 88, 79, 0.45);
+  color: var(--crt-red-bright);
+  font-family: var(--font-crt);
+  font-size: 0.95rem;
+  letter-spacing: 0.15em;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.alert-icon {
+  font-weight: bold;
+  color: var(--crt-red-bright);
+}
+
+/* Form structure */
 .create-form {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.5rem;
 }
 
 .field {
   display: flex;
   flex-direction: column;
+  gap: 0.5rem;
 }
 
-.create-submit {
+.terminal-label {
+  font-family: var(--font-crt);
+  font-size: 0.9rem;
+  color: var(--ink-dim);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* Input Fields */
+.terminal-input {
   width: 100%;
-  margin-top: 0.5rem;
-  padding: 0.875rem;
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px solid var(--line-strong);
+  padding: 0.85rem 1rem;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  outline: none;
+  caret-color: var(--crt-red-bright);
+  transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
 }
 
-/* ── Success view ── */
+.terminal-input:hover {
+  border-color: rgba(216, 211, 198, 0.35);
+  background: rgba(0, 0, 0, 0.75);
+}
 
+.terminal-input:focus {
+  border-color: var(--crt-red-bright);
+  background: rgba(0, 0, 0, 0.85);
+  box-shadow: 0 0 12px rgba(228, 88, 79, 0.18);
+}
+
+.terminal-input::placeholder {
+  color: var(--ink-faint);
+  opacity: 0.6;
+}
+
+/* Option Grids (Selectable Pills / Cards) */
+.option-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.option-grid--2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.option-grid--3 {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.option-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.85rem 0.6rem;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--line);
+  color: var(--ink-dim);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  outline: none;
+  position: relative;
+  text-align: center;
+}
+
+.option-title {
+  font-family: var(--font-crt);
+  font-size: 1.05rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  transition: color 0.18s ease;
+}
+
+.option-subtitle {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  margin-top: 0.2rem;
+  text-transform: uppercase;
+  transition: color 0.18s ease;
+}
+
+.option-card:hover {
+  border-color: var(--line-strong);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.option-card:hover .option-title {
+  color: var(--ink);
+}
+
+/* Selected state for option cards */
+.option-card.selected {
+  background: rgba(194, 65, 59, 0.12);
+  border-color: var(--crt-red-bright);
+  box-shadow: 0 0 14px rgba(194, 65, 59, 0.15), inset 0 0 8px rgba(0, 0, 0, 0.4);
+}
+
+.option-card.selected .option-title {
+  color: var(--ink);
+}
+
+.option-card.selected .option-subtitle {
+  color: var(--crt-red-bright);
+}
+
+/* Terminal Submit Button */
+.terminal-submit-btn {
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.95rem 1.5rem;
+  font-family: var(--font-crt);
+  font-size: 1.2rem;
+  letter-spacing: 0.22em;
+  color: var(--ink);
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--line-strong);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.18s ease;
+  position: relative;
+}
+
+.terminal-submit-btn .btn-bracket {
+  color: var(--line-strong);
+  margin: 0 0.5rem;
+  transition: color 0.18s ease;
+}
+
+.terminal-submit-btn:hover:not(:disabled) {
+  background: rgba(194, 65, 59, 0.16);
+  border-color: var(--crt-red-bright);
+  color: var(--ink);
+  box-shadow: 0 0 20px rgba(194, 65, 59, 0.2);
+}
+
+.terminal-submit-btn:hover:not(:disabled) .btn-bracket {
+  color: var(--crt-red-bright);
+}
+
+.terminal-submit-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  border-color: var(--line);
+}
+
+/* Terminal Secondary Button */
+.terminal-btn-sec {
+  flex: 1;
+  padding: 0.85rem 1.25rem;
+  font-family: var(--font-crt);
+  font-size: 1rem;
+  letter-spacing: 0.15em;
+  color: var(--ink-dim);
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--line-strong);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  text-transform: uppercase;
+}
+
+.terminal-btn-sec:hover {
+  color: var(--ink);
+  border-color: var(--ink-dim);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Success View */
 .success-view {
   text-align: center;
 }
 
-.success-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 1.5rem;
-}
-
 .code-display {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 1.5rem;
-  margin-bottom: 1rem;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--line-strong);
+  padding: 1.75rem 1rem;
+  margin-bottom: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .code-label {
-  font-size: 0.625rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--text-muted);
+  font-family: var(--font-crt);
+  font-size: 0.85rem;
+  letter-spacing: 0.25em;
+  color: var(--crt-red-bright);
 }
 
 .code-value {
-  font-size: 2rem;
+  font-size: 2.2rem;
   font-weight: 700;
-  letter-spacing: 0.2em;
-  color: var(--text-primary);
-}
-
-.success-hint {
-  font-size: 0.8125rem;
-  color: var(--text-secondary);
-  margin-bottom: 1.5rem;
-  line-height: 1.5;
+  letter-spacing: 0.3em;
+  color: var(--ink);
 }
 
 .success-actions {
   display: flex;
-  gap: 0.75rem;
+  gap: 1rem;
+}
+
+/* Panel Footer & Navigation */
+.panel-footer {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px dotted var(--line);
+  text-align: center;
+}
+
+.back-link {
+  font-family: var(--font-crt);
+  font-size: 0.95rem;
+  color: var(--ink-dim);
+  letter-spacing: 0.18em;
+  text-decoration: none;
+  transition: color 0.18s ease;
+}
+
+.back-link:hover {
+  color: var(--crt-red-bright);
+}
+
+@media (max-width: 540px) {
+  .terminal-panel {
+    padding: 1.75rem 1.25rem;
+  }
+  .option-grid--3 {
+    grid-template-columns: 1fr;
+  }
 }

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { Header } from '../components/Header';
 import { createRoom, ApiError } from '../services/roomApi';
 import type { RoomType, CreateRoomResponse } from '../types';
@@ -11,16 +11,29 @@ export const CreateRoomPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [roomType, setRoomType] = useState<RoomType>('DIRECT');
   const [ttlMinutes, setTtlMinutes] = useState(60);
+  const [uiMode, setUiMode] = useState<'MODERN' | 'TERMINAL'>(() => {
+    return (localStorage.getItem('hush_ui_mode') as 'MODERN' | 'TERMINAL') || 'MODERN';
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [createdRoom, setCreatedRoom] = useState<CreateRoomResponse | null>(null);
   const [copied, setCopied] = useState(false);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        navigate('/');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [navigate]);
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = username.trim();
     if (!trimmed) {
-      setError('Please enter a username.');
+      setError('USERNAME REQUIRED');
       return;
     }
 
@@ -28,13 +41,14 @@ export const CreateRoomPage: React.FC = () => {
     setError(null);
 
     try {
+      localStorage.setItem('hush_ui_mode', uiMode);
       const data = await createRoom({ type: roomType, ttlMinutes });
       setCreatedRoom(data);
     } catch (err) {
       if (err instanceof ApiError) {
-        setError(err.message);
+        setError(err.message.toUpperCase());
       } else {
-        setError('Could not connect to server.');
+        setError('COULD NOT CONNECT TO SERVER');
       }
     } finally {
       setLoading(false);
@@ -48,125 +62,178 @@ export const CreateRoomPage: React.FC = () => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Clipboard API might not be available
+      // Clipboard fallback
     }
   };
 
   const enterRoom = () => {
     if (createdRoom) {
+      localStorage.setItem('hush_ui_mode', uiMode);
       navigate(`/room/${createdRoom.roomCode}`, {
-        state: { username: username.trim() },
+        state: { username: username.trim(), uiMode },
       });
     }
   };
 
   return (
-    <div className="page">
+    <div className="page page-enter">
       <Header />
 
       <main className="page-center">
-        <div className="container">
-          <div className="card animate-fadeIn">
-            {!createdRoom ? (
-              <>
-                <div className="create-header">
-                  <h1 className="create-title">Create a room</h1>
-                  <p className="create-desc">No account required. Room expires automatically.</p>
-                </div>
+        <div className="terminal-panel animate-fadeIn">
+          <div className="panel-corner corner-tl" />
+          <div className="panel-corner corner-tr" />
+          <div className="panel-corner corner-bl" />
+          <div className="panel-corner corner-br" />
 
-                {error && <div className="alert-error" role="alert">{error}</div>}
-
-                <form onSubmit={handleCreate} className="create-form">
-                  <div className="field">
-                    <label htmlFor="username" className="label">Username</label>
-                    <input
-                      id="username"
-                      type="text"
-                      className="input"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      placeholder="e.g. Conan"
-                      maxLength={32}
-                      required
-                      autoComplete="off"
-                    />
-                  </div>
-
-                  <div className="field">
-                    <label className="label">Room type</label>
-                    <div className="pill-group">
-                      <button
-                        type="button"
-                        className={`pill ${roomType === 'DIRECT' ? 'active' : ''}`}
-                        onClick={() => setRoomType('DIRECT')}
-                        aria-pressed={roomType === 'DIRECT'}
-                      >
-                        Direct (2)
-                      </button>
-                      <button
-                        type="button"
-                        className={`pill ${roomType === 'GROUP' ? 'active' : ''}`}
-                        onClick={() => setRoomType('GROUP')}
-                        aria-pressed={roomType === 'GROUP'}
-                      >
-                        Group (20)
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="field">
-                    <label className="label">Duration</label>
-                    <div className="pill-group">
-                      {[
-                        { label: '30 min', val: 30 },
-                        { label: '1 hour', val: 60 },
-                        { label: '3 hours', val: 180 },
-                      ].map((item) => (
-                        <button
-                          key={item.val}
-                          type="button"
-                          className={`pill ${ttlMinutes === item.val ? 'active' : ''}`}
-                          onClick={() => setTtlMinutes(item.val)}
-                          aria-pressed={ttlMinutes === item.val}
-                        >
-                          {item.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={loading || !username.trim()}
-                    className="btn btn-primary create-submit"
-                  >
-                    {loading ? 'Creating…' : 'Create room'}
-                  </button>
-                </form>
-              </>
-            ) : (
-              <div className="success-view animate-slideUp">
-                <h2 className="success-title">Your room is ready</h2>
-
-                <div className="code-display">
-                  <span className="code-label font-mono">Room Code</span>
-                  <span className="code-value font-mono">{createdRoom.roomCode}</span>
-                </div>
-
-                <p className="success-hint">
-                  Share this code with the person you want to talk to.
+          {!createdRoom ? (
+            <>
+              <div className="create-header">
+                <h1 className="create-title">CREATE A ROOM</h1>
+                <p className="create-desc">
+                  No account required. Channel expires automatically.
                 </p>
-
-                <div className="success-actions">
-                  <button onClick={copyCode} className="btn btn-secondary" style={{ flex: 1 }}>
-                    {copied ? '✓ Copied' : 'Copy code'}
-                  </button>
-                  <button onClick={enterRoom} className="btn btn-primary" style={{ flex: 1 }}>
-                    Enter room →
-                  </button>
-                </div>
               </div>
-            )}
+
+              {error && (
+                <div className="terminal-alert" role="alert">
+                  <span className="alert-icon">!</span> {error}
+                </div>
+              )}
+
+              <form onSubmit={handleCreate} className="create-form">
+                <div className="field">
+                  <label htmlFor="username" className="terminal-label">
+                    USERNAME
+                  </label>
+                  <input
+                    id="username"
+                    type="text"
+                    className="terminal-input"
+                    value={username}
+                    onChange={(e) => {
+                      setUsername(e.target.value);
+                      setError(null);
+                    }}
+                    placeholder="e.g. Immortal"
+                    maxLength={32}
+                    required
+                    autoComplete="off"
+                  />
+                </div>
+
+                <div className="field">
+                  <label className="terminal-label">ROOM TYPE</label>
+                  <div className="option-grid option-grid--2">
+                    <button
+                      type="button"
+                      className={`option-card ${roomType === 'DIRECT' ? 'selected' : ''}`}
+                      onClick={() => setRoomType('DIRECT')}
+                      aria-pressed={roomType === 'DIRECT'}
+                    >
+                      <span className="option-title">DIRECT</span>
+                      <span className="option-subtitle">2 PARTICIPANTS</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={`option-card ${roomType === 'GROUP' ? 'selected' : ''}`}
+                      onClick={() => setRoomType('GROUP')}
+                      aria-pressed={roomType === 'GROUP'}
+                    >
+                      <span className="option-title">GROUP</span>
+                      <span className="option-subtitle">UP TO 20</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="field">
+                  <label className="terminal-label">ROOM INTERFACE</label>
+                  <div className="option-grid option-grid--2">
+                    <button
+                      type="button"
+                      className={`option-card ${uiMode === 'MODERN' ? 'selected' : ''}`}
+                      onClick={() => setUiMode('MODERN')}
+                      aria-pressed={uiMode === 'MODERN'}
+                    >
+                      <span className="option-title">MODERN</span>
+                      <span className="option-subtitle">Familiar chat interface for everyday users</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={`option-card ${uiMode === 'TERMINAL' ? 'selected' : ''}`}
+                      onClick={() => setUiMode('TERMINAL')}
+                      aria-pressed={uiMode === 'TERMINAL'}
+                    >
+                      <span className="option-title">TERMINAL</span>
+                      <span className="option-subtitle">Classic HUSH terminal experience</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="field">
+                  <label className="terminal-label">DURATION</label>
+                  <div className="option-grid option-grid--3">
+                    {[
+                      { label: '30 MIN', sub: 'HALF HOUR', val: 30 },
+                      { label: '1 HOUR', sub: 'STANDARD', val: 60 },
+                      { label: '3 HOURS', sub: 'EXTENDED', val: 180 },
+                    ].map((item) => (
+                      <button
+                        key={item.val}
+                        type="button"
+                        className={`option-card ${ttlMinutes === item.val ? 'selected' : ''}`}
+                        onClick={() => setTtlMinutes(item.val)}
+                        aria-pressed={ttlMinutes === item.val}
+                      >
+                        <span className="option-title">{item.label}</span>
+                        <span className="option-subtitle">{item.sub}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading || !username.trim()}
+                  className="terminal-submit-btn"
+                >
+                  <span className="btn-bracket">[</span>
+                  <span className="btn-text">
+                    {loading ? 'INITIALIZING CHANNEL...' : 'CREATE ROOM'}
+                  </span>
+                  <span className="btn-bracket">]</span>
+                </button>
+              </form>
+            </>
+          ) : (
+            <div className="success-view animate-slideUp">
+              <div className="create-header">
+                <h2 className="create-title">CHANNEL READY</h2>
+                <p className="create-desc">Share this code with your peer.</p>
+              </div>
+
+              <div className="code-display">
+                <span className="code-label font-mono">ROOM CODE</span>
+                <span className="code-value font-mono">{createdRoom.roomCode}</span>
+              </div>
+
+              <div className="success-actions">
+                <button onClick={copyCode} type="button" className="terminal-btn-sec">
+                  {copied ? '✓ COPIED' : 'COPY CODE'}
+                </button>
+                <button onClick={enterRoom} type="button" className="terminal-submit-btn">
+                  <span className="btn-bracket">[</span>
+                  <span className="btn-text">ENTER ROOM →</span>
+                  <span className="btn-bracket">]</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="panel-footer">
+            <Link to="/" className="back-link">
+              ← [ ESC ] BACK TO TERMINAL
+            </Link>
           </div>
         </div>
       </main>

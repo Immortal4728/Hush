@@ -1,17 +1,58 @@
+/* ════════════════════════════════════════════════════════════
+   HUSH · analog retro palette
+   aged phosphor / faded CRT red / warm gray on dirty black
+   ════════════════════════════════════════════════════════════ */
+
 :root {
-  --bg: #08090D;
-  --surface: #111318;
-  --surface-hover: #181B22;
-  --text-primary: #F5F7FA;
-  --text-secondary: #9298A5;
-  --text-muted: #5F6572;
-  --accent: #7C5CFC;
-  --accent-hover: #6B4CE0;
-  --success: #35D07F;
-  --danger: #FF5C6C;
-  --border: rgba(255, 255, 255, 0.08);
-  --border-hover: rgba(255, 255, 255, 0.14);
-  --radius: 10px;
-  --radius-sm: 6px;
-  --transition: 0.2s ease;
+  /* surfaces */
+  --void: #060607;
+  --bg: #0b0b0d;
+  --bg-2: #101013;
+  --bg-3: #16161a;
+  --panel: rgba(255, 255, 255, 0.024);
+  --panel-strong: rgba(255, 255, 255, 0.05);
+
+  /* ink */
+  --ink: #d8d3c4;        /* faded off-white */
+  --ink-dim: #97917f;    /* warm gray */
+  --ink-faint: #5c574b;  /* faint warm gray */
+
+  /* accents — aged, never neon */
+  --olive: #7c7a52;
+  --olive-dim: #4e4a34;
+  --phosphor: #8cb56e;       /* old monitor phosphor green */
+  --phosphor-dim: #5d7f4b;
+  --crt-red: #c2413b;        /* old CRT red */
+  --crt-red-bright: #e4584f;
+  --cyan-pale: #8fbdba;      /* pale cyan, occasional */
+  --amber: #c9a54a;          /* aged amber, warnings/host */
+
+  /* hairlines */
+  --line: rgba(216, 211, 198, 0.09);
+  --line-strong: rgba(216, 211, 198, 0.2);
+
+  /* glitch channel separation (rgb triplets) */
+  --glitch-r: 255, 64, 54;
+  --glitch-c: 72, 216, 209;
+
+  /* shape */
+  --radius: 2px;
+  --transition: 0.18s ease;
+
+  /* type */
+  --font-display: 'Anton', 'Arial Narrow', 'Impact', sans-serif;
+  --font-crt: 'VT323', 'Courier New', monospace;
+  --font-mono: 'IBM Plex Mono', 'Consolas', 'Menlo', monospace;
+
+  /* layer stack */
+  --z-content: 1;
+  --z-header: 20;
+  --z-drawer: 60;
+  --z-glitch: 80;
+  --z-transition: 95;
+  --z-intro: 100;
+  --z-scanlines: 110;
+
+  /* procedural analog noise (SVG turbulence) */
+  --noise-url: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='240'%20height='240'%3E%3Cfilter%20id='n'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.85'%20numOctaves='2'%20stitchTiles='stitch'/%3E%3CfeColorMatrix%20type='saturate'%20values='0'/%3E%3C/filter%3E%3Crect%20width='100%25'%20height='100%25'%20filter='url(%23n)'/%3E%3C/svg%3E");
 }

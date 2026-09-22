@@ -1,0 +1,106 @@
+.admin-login-card {
+  width: 100%;
+  max-width: 460px;
+  padding: 2.25rem;
+  background: rgba(8, 8, 10, 0.92);
+  border: 1px solid var(--line-strong);
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.75),
+    0 0 40px rgba(228, 88, 79, 0.06);
+  position: relative;
+}
+
+.admin-login-header {
+  margin-bottom: 1.75rem;
+  text-align: left;
+}
+
+.admin-console-tag {
+  font-size: 0.85rem;
+  letter-spacing: 0.25em;
+  color: var(--crt-red-bright);
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+.admin-login-title {
+  font-size: 1.85rem;
+  color: var(--ink);
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.admin-login-desc {
+  font-size: 0.88rem;
+  color: var(--ink-faint);
+  letter-spacing: 0.1em;
+  line-height: 1.4;
+}
+
+.admin-alert {
+  margin-bottom: 1.5rem;
+  background: rgba(228, 88, 79, 0.12);
+  border: 1px solid var(--crt-red-bright);
+  color: var(--crt-red-bright);
+  padding: 0.65rem 0.9rem;
+  font-family: var(--font-crt);
+  font-size: 0.9rem;
+  letter-spacing: 0.1em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+}
+
+.admin-submit-btn {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.9rem 1.25rem;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--crt-red-bright);
+  color: var(--crt-red-bright);
+  font-family: var(--font-crt);
+  font-size: 1.05rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.admin-submit-btn:hover:not(:disabled) {
+  background: rgba(228, 88, 79, 0.15);
+  box-shadow: 0 0 15px rgba(228, 88, 79, 0.3);
+}
+
+.admin-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-login-footer {
+  margin-top: 1.75rem;
+  padding-top: 1.1rem;
+  border-top: 1px dotted var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+}
+
+.status-indicator {
+  color: #48d8d1;
+}
+
+.security-tag {
+  color: var(--ink-faint);
+}
