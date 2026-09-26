@@ -2,11 +2,13 @@ package com.hush.websocket;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hush.config.HushWebSocketProperties;
 import com.hush.exception.IllegalRoomStateException;
 import com.hush.exception.InvalidParticipantException;
 import com.hush.exception.RoomFullException;
 import com.hush.exception.RoomNotFoundException;
 import com.hush.message.ChatMessage;
+import com.hush.metrics.MetricsService;
 import com.hush.participant.Participant;
 import com.hush.ratelimit.RateLimitingService;
 import com.hush.room.RoomService;
@@ -39,6 +41,8 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     private final WebSocketSessionRegistry sessionRegistry;
     private final ObjectMapper objectMapper;
     private final RateLimitingService rateLimitingService;
+    private final MetricsService metricsService;
+    private final HushWebSocketProperties webSocketProperties;
 
     private final ConcurrentHashMap<String, UnjoinedSessionInfo> unjoinedSessions = new ConcurrentHashMap<>();
 
@@ -48,16 +52,32 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
                                 WebSocketSessionRegistry sessionRegistry,
                                 ObjectMapper objectMapper,
                                 RateLimitingService rateLimitingService) {
+        this(roomService, sessionRegistry, objectMapper, rateLimitingService,
+                new MetricsService(new com.hush.config.HushRateLimitProperties()),
+                new HushWebSocketProperties());
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public ChatWebSocketHandler(RoomService roomService,
+                                WebSocketSessionRegistry sessionRegistry,
+                                ObjectMapper objectMapper,
+                                RateLimitingService rateLimitingService,
+                                MetricsService metricsService,
+                                HushWebSocketProperties webSocketProperties) {
         this.roomService = Objects.requireNonNull(roomService, "roomService must not be null");
         this.sessionRegistry = Objects.requireNonNull(sessionRegistry, "sessionRegistry must not be null");
         this.objectMapper = Objects.requireNonNull(objectMapper, "objectMapper must not be null");
         this.rateLimitingService = Objects.requireNonNull(rateLimitingService, "rateLimitingService must not be null");
+        this.metricsService = metricsService != null ? metricsService : new MetricsService(new com.hush.config.HushRateLimitProperties());
+        this.webSocketProperties = webSocketProperties != null ? webSocketProperties : new HushWebSocketProperties();
     }
 
     @Override
     public void afterConnectionEstablished(@org.springframework.lang.NonNull WebSocketSession session) throws Exception {
         logger.info("[WS-DEBUG] CONNECTION OPEN - session: {}", session.getId());
+        metricsService.recordConnectionAttempt();
         if (!rateLimitingService.tryIncrementWebSocketConnection()) {
+            metricsService.recordConnectionRejected();
             logger.warn("WebSocket connection rejected: Global connection limit reached for session {}", session.getId());
             sendDirect(session, ServerMessage.error("CONNECTION_RATE_LIMITED", "Global connection limit reached. Please try again later."));
             session.close(CloseStatus.POLICY_VIOLATION);
@@ -75,11 +95,13 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             clientMessage = objectMapper.readValue(message.getPayload(), ClientMessage.class);
         } catch (Exception e) {
             logger.warn("Malformed JSON received on session {}", session.getId());
+            metricsService.recordInvalidMessage();
             sendDirect(session, ServerMessage.error("INVALID_JSON", "Invalid message format."));
             return;
         }
 
         if (clientMessage == null || clientMessage.getType() == null) {
+            metricsService.recordInvalidMessage();
             sendDirect(session, ServerMessage.error("INVALID_MESSAGE", "Message type is required."));
             return;
         }
@@ -91,18 +113,24 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             case MESSAGE -> handleMessage(session, clientMessage);
             case TYPING -> handleTyping(session, clientMessage);
             case LEAVE -> handleLeave(session);
-            default -> sendDirect(session, ServerMessage.error("INVALID_MESSAGE", "Unknown message type."));
+            default -> {
+                metricsService.recordInvalidMessage();
+                sendDirect(session, ServerMessage.error("INVALID_MESSAGE", "Unknown message type."));
+            }
         }
     }
 
     private void handleJoin(WebSocketSession session, ClientMessage clientMessage) {
+        metricsService.recordJoinAttempt();
         if (sessionRegistry.getSessionState(session).isPresent()) {
+            metricsService.recordRejectedJoin();
             sendDirect(session, ServerMessage.error("ALREADY_JOINED", "This connection has already joined a room."));
             return;
         }
 
         String clientIp = rateLimitingService.getIpResolver().resolveIp(session, rateLimitingService.isTrustForwardedFor());
         if (!rateLimitingService.allowJoinAttempt(clientIp)) {
+            metricsService.recordRejectedJoin();
             sendDirect(session, ServerMessage.error("JOIN_RATE_LIMITED", "Too many join attempts. Please slow down."));
             return;
         }
@@ -112,6 +140,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         logger.info("[WS-DEBUG] JOIN ROOM: {}, JOIN USER: {}", roomCode, username);
 
         if (roomCode == null || roomCode.isBlank() || username == null || username.isBlank()) {
+            metricsService.recordRejectedJoin();
             sendDirect(session, ServerMessage.error("INVALID_PARTICIPANT", "Room code and username are required."));
             return;
         }
@@ -119,19 +148,25 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         Participant participant;
         try {
             participant = roomService.addParticipant(roomCode, username);
+            metricsService.recordSuccessfulJoin();
         } catch (RoomNotFoundException e) {
+            metricsService.recordRejectedJoin();
             sendDirect(session, ServerMessage.error("ROOM_NOT_FOUND", "Room does not exist."));
             return;
         } catch (RoomFullException e) {
+            metricsService.recordRejectedJoin();
             sendDirect(session, ServerMessage.error("ROOM_FULL", "Room is full."));
             return;
         } catch (InvalidParticipantException e) {
+            metricsService.recordRejectedJoin();
             sendDirect(session, ServerMessage.error("INVALID_PARTICIPANT", e.getMessage()));
             return;
         } catch (IllegalRoomStateException e) {
+            metricsService.recordRejectedJoin();
             sendDirect(session, ServerMessage.error("ILLEGAL_ROOM_STATE", e.getMessage()));
             return;
         } catch (Exception e) {
+            metricsService.recordRejectedJoin();
             logger.error("Error joining room for session {}", session.getId(), e);
             sendDirect(session, ServerMessage.error("INTERNAL_ERROR", "Failed to join room."));
             return;
@@ -179,13 +214,18 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     }
 
     private void handleMessage(WebSocketSession session, ClientMessage clientMessage) {
+        long startNano = System.nanoTime();
+        metricsService.recordMessageReceived();
+
         Optional<WebSocketSessionRegistry.SessionState> stateOpt = sessionRegistry.getSessionState(session);
         if (stateOpt.isEmpty()) {
+            metricsService.recordInvalidMessage();
             sendDirect(session, ServerMessage.error("NOT_JOINED", "You must join a room first."));
             return;
         }
 
         if (!rateLimitingService.allowMessage(session.getId())) {
+            metricsService.recordRateLimitedMessage();
             sendDirect(session, ServerMessage.error("MESSAGE_RATE_LIMITED", "Too many messages. Please slow down."));
             return;
         }
@@ -198,9 +238,11 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         }
 
         String text = clientMessage.getText();
+        int maxLen = webSocketProperties.getMaxMessageLength();
 
-        if (text == null || text.isBlank() || text.length() > 2000) {
-            sendDirect(session, ServerMessage.error("INVALID_MESSAGE", "Message length must be between 1 and 2000 characters."));
+        if (text == null || text.isBlank() || text.length() > maxLen) {
+            metricsService.recordInvalidMessage();
+            sendDirect(session, ServerMessage.error("INVALID_MESSAGE", "Message length must be between 1 and " + maxLen + " characters."));
             return;
         }
 
@@ -212,6 +254,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             ChatMessage domainMsg = new ChatMessage(messageId, state.getParticipantId(), state.getUsername(), text, now);
             roomOpt.get().addMessage(domainMsg);
         } catch (IllegalArgumentException e) {
+            metricsService.recordInvalidMessage();
             sendDirect(session, ServerMessage.error("INVALID_MESSAGE", e.getMessage()));
             return;
         }
@@ -226,6 +269,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
         Collection<WebSocketSession> roomSessions = sessionRegistry.getSessionsForRoom(state.getRoomCode());
         broadcast(roomSessions, serverMessage);
+        metricsService.recordMessageProcessingLatency(System.nanoTime() - startNano);
     }
 
     private void handleTyping(WebSocketSession session, ClientMessage clientMessage) {
@@ -283,6 +327,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
     private void cleanupSessionAndNotify(WebSocketSession session, boolean closeSocket) {
         logger.info("[WS-DEBUG] CONNECTION CLOSED - session: {}", session.getId());
+        metricsService.recordDisconnect();
         unjoinedSessions.remove(session.getId());
         if (Boolean.TRUE.equals(session.getAttributes().remove(CONNECTION_COUNTED_ATTR))) {
             rateLimitingService.decrementWebSocketConnection();
@@ -290,6 +335,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
         Optional<WebSocketSessionRegistry.SessionState> stateOpt = sessionRegistry.removeSession(session);
         if (stateOpt.isPresent()) {
+            metricsService.recordLeaveEvent();
             WebSocketSessionRegistry.SessionState state = stateOpt.get();
             roomService.removeParticipant(state.getRoomCode(), state.getParticipantId());
             logger.info("Participant disconnected from room via WebSocket session {}", session.getId());
@@ -313,9 +359,10 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     @Scheduled(fixedDelay = 2000)
     public void cleanupUnjoinedSessions() {
         Instant now = Instant.now();
+        int timeoutSec = webSocketProperties.getUnjoinedTimeoutSeconds();
         for (Map.Entry<String, UnjoinedSessionInfo> entry : unjoinedSessions.entrySet()) {
             UnjoinedSessionInfo info = entry.getValue();
-            if (Duration.between(info.connectTime(), now).getSeconds() >= 10) {
+            if (Duration.between(info.connectTime(), now).getSeconds() >= timeoutSec) {
                 if (unjoinedSessions.remove(entry.getKey(), info)) {
                     logger.warn("Unjoined WebSocket connection timed out for session {}", info.session().getId());
                     sendDirect(info.session(), ServerMessage.error("JOIN_TIMEOUT", "Timed out waiting for JOIN message."));
@@ -360,6 +407,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         if (sessions == null || sessions.isEmpty()) {
             return;
         }
+        long startNano = System.nanoTime();
         String json;
         try {
             json = objectMapper.writeValueAsString(serverMessage);
@@ -368,12 +416,14 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             return;
         }
         TextMessage textMessage = new TextMessage(json);
+        int sentCount = 0;
         for (WebSocketSession session : sessions) {
             if (session.isOpen()) {
                 try {
                     synchronized (session) {
                         if (session.isOpen()) {
                             session.sendMessage(textMessage);
+                            sentCount++;
                         }
                     }
                 } catch (IOException e) {
@@ -381,5 +431,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
                 }
             }
         }
+        metricsService.recordMessageBroadcast(sentCount);
+        metricsService.recordBroadcastLatency(System.nanoTime() - startNano);
     }
 }

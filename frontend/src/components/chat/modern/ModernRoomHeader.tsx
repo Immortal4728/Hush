@@ -7,6 +7,7 @@ interface ModernRoomHeaderProps {
   status: ConnectionStatus;
   expiresAt?: string;
   participantCount: number;
+  roomType?: string;
   onCopyCode: () => void;
   copied: boolean;
   onLeave: () => void;
@@ -15,6 +16,7 @@ interface ModernRoomHeaderProps {
   isSidebarOpen: boolean;
   uiMode: 'MODERN' | 'TERMINAL';
   onToggleUiMode: () => void;
+  onNextStranger?: () => void;
 }
 
 export const ModernRoomHeader: React.FC<ModernRoomHeaderProps> = ({
@@ -22,6 +24,7 @@ export const ModernRoomHeader: React.FC<ModernRoomHeaderProps> = ({
   status,
   expiresAt,
   participantCount,
+  roomType,
   onCopyCode,
   copied,
   onLeave,
@@ -30,9 +33,11 @@ export const ModernRoomHeader: React.FC<ModernRoomHeaderProps> = ({
   isSidebarOpen,
   uiMode,
   onToggleUiMode,
+  onNextStranger,
 }) => {
   const isConnected = status === 'CONNECTED';
   const statusColorClass = isConnected ? 'sys-ok' : status === 'EXPIRING' ? 'sys-warn' : 'sys-error';
+  const statusLabel = isConnected ? 'CONNECTED' : status === 'CONNECTING' ? 'CONNECTING...' : 'DISCONNECTED';
 
   return (
     <header className="modern-header font-sans">
@@ -56,21 +61,40 @@ export const ModernRoomHeader: React.FC<ModernRoomHeaderProps> = ({
             title="Copy room code"
             type="button"
           >
-            {copied ? 'COPIED' : 'COPY'}
+            {copied ? '✓ COPIED' : 'COPY'}
           </button>
         </div>
 
+        {roomType && (
+          <div className="modern-type-badge hidden md:flex">
+            <span>{roomType}</span>
+          </div>
+        )}
+
         <div className={`modern-status-tag ${statusColorClass}`}>
           <span className="status-dot" />
-          <span className="status-text">{status}</span>
+          <span className="status-text">{statusLabel}</span>
         </div>
       </div>
 
       <div className="modern-header-right">
         {expiresAt && (
-          <div className="modern-timer-box font-mono">
+          <div className="modern-timer-box font-mono" title="Session time remaining">
+            <span className="timer-icon">⏳</span>
             <CountdownTimer expiresAt={expiresAt} />
           </div>
+        )}
+
+        {onNextStranger && (
+          <button
+            onClick={onNextStranger}
+            className="modern-nav-btn font-mono"
+            type="button"
+            title="Find another stranger"
+            style={{ color: '#00ffaa', borderColor: 'rgba(0,255,170,0.5)', backgroundColor: 'rgba(0,255,170,0.1)' }}
+          >
+            NEXT STRANGER
+          </button>
         )}
 
         <button
@@ -86,13 +110,13 @@ export const ModernRoomHeader: React.FC<ModernRoomHeaderProps> = ({
           onClick={onToggleUiMode}
           className="modern-mode-switch-btn font-mono"
           type="button"
-          title="Switch visual mode"
+          title="Switch to Terminal UI"
         >
-          MODE: {uiMode}
+          {uiMode}
         </button>
 
-        <button onClick={onLeave} className="modern-exit-btn" type="button">
-          LEAVE
+        <button onClick={onLeave} className="modern-exit-btn" type="button" title="Leave room">
+          EXIT
         </button>
       </div>
     </header>

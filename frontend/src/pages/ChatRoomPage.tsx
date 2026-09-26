@@ -184,7 +184,14 @@ export const ChatRoomPage: React.FC = () => {
     setLocalMessages((prev) => [...prev, sysMsg]);
   };
 
+  const handleNextStranger = () => {
+    isLeavingRef.current = true;
+    leave();
+    navigate('/stranger');
+  };
+
   const isModern = uiMode === 'MODERN';
+  const showNextStranger = roomInfo?.type === 'DIRECT' || (location.state as any)?.isStranger;
 
   return (
     <div className={`chat-room-layout ${isModern ? 'modern-mode' : 'font-mono'}`}>
@@ -195,6 +202,7 @@ export const ChatRoomPage: React.FC = () => {
           status={status}
           expiresAt={roomInfo?.expiresAt}
           participantCount={participants.length}
+          roomType={roomInfo?.type || 'DIRECT'}
           onCopyCode={copyCode}
           copied={copied}
           onLeave={handleLeave}
@@ -203,6 +211,7 @@ export const ChatRoomPage: React.FC = () => {
           isSidebarOpen={isSidebarOpen}
           uiMode={uiMode}
           onToggleUiMode={toggleUiMode}
+          onNextStranger={showNextStranger ? handleNextStranger : undefined}
         />
       ) : (
         <RoomHeader
@@ -218,6 +227,7 @@ export const ChatRoomPage: React.FC = () => {
           isSidebarOpen={isSidebarOpen}
           uiMode={uiMode}
           onToggleUiMode={toggleUiMode}
+          onNextStranger={showNextStranger ? handleNextStranger : undefined}
         />
       )}
 

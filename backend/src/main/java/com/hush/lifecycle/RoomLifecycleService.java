@@ -31,15 +31,28 @@ public class RoomLifecycleService {
     private final WebSocketSessionRegistry sessionRegistry;
     private final ObjectMapper objectMapper;
     private final HushLifecycleProperties properties;
+    private final com.hush.metrics.MetricsService metricsService;
 
     public RoomLifecycleService(RoomService roomService,
                                 WebSocketSessionRegistry sessionRegistry,
                                 ObjectMapper objectMapper,
                                 HushLifecycleProperties properties) {
+        this(roomService, sessionRegistry, objectMapper, properties,
+                new com.hush.metrics.MetricsService(new com.hush.config.HushRateLimitProperties()));
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public RoomLifecycleService(RoomService roomService,
+                                WebSocketSessionRegistry sessionRegistry,
+                                ObjectMapper objectMapper,
+                                HushLifecycleProperties properties,
+                                com.hush.metrics.MetricsService metricsService) {
         this.roomService = Objects.requireNonNull(roomService, "roomService must not be null");
         this.sessionRegistry = Objects.requireNonNull(sessionRegistry, "sessionRegistry must not be null");
         this.objectMapper = Objects.requireNonNull(objectMapper, "objectMapper must not be null");
         this.properties = Objects.requireNonNull(properties, "properties must not be null");
+        this.metricsService = metricsService != null ? metricsService :
+                new com.hush.metrics.MetricsService(new com.hush.config.HushRateLimitProperties());
     }
 
     public void processExpirations() {
@@ -89,6 +102,13 @@ public class RoomLifecycleService {
             // Already destroyed
             return false;
         }
+
+        if ("EXPIRED".equalsIgnoreCase(reason)) {
+            metricsService.recordRoomExpired();
+        } else if ("EMPTY_GRACE_PERIOD_EXPIRED".equalsIgnoreCase(reason)) {
+            metricsService.recordEmptyRoomDestroyed();
+        }
+        metricsService.recordRoomDestroyed();
 
         Collection<WebSocketSession> sessions = sessionRegistry.getSessionsForRoom(roomCode);
         ServerMessage destroyedMessage = ServerMessage.roomDestroyed(roomCode, reason);

@@ -13,6 +13,16 @@ export const Header: React.FC = () => {
 
         <nav className="header-nav">
           <NavLink
+            to="/stranger"
+            className={({ isActive }) =>
+              `header-link ${isActive ? 'active' : ''}`
+            }
+          >
+            <span className="nav-text">Stranger</span>
+            <span className="nav-indicator" aria-hidden="true" />
+          </NavLink>
+
+          <NavLink
             to="/how-it-works"
             className={({ isActive }) =>
               `header-link ${isActive ? 'active' : ''}`

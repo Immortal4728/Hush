@@ -8,6 +8,7 @@ import { ExpiredPage } from '../pages/ExpiredPage';
 import { AnalyticsDashboardPage } from '../pages/AnalyticsDashboardPage';
 import { HowItWorksPage } from '../pages/HowItWorksPage';
 import { AboutPage } from '../pages/AboutPage';
+import { StrangerMatchPage } from '../pages/StrangerMatchPage';
 
 import { RetroBackground } from '../components/retro/RetroBackground';
 import { AsciiBackground } from '../components/retro/AsciiBackground';
@@ -28,6 +29,7 @@ const AppContent: React.FC = () => {
         <Route path="/" element={<LandingPage />} />
         <Route path="/create" element={<CreateRoomPage />} />
         <Route path="/join" element={<JoinRoomPage />} />
+        <Route path="/stranger" element={<StrangerMatchPage />} />
         <Route path="/how-it-works" element={<HowItWorksPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/room/:code" element={<ChatRoomPage />} />

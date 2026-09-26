@@ -26,6 +26,9 @@ export const LandingPage: React.FC = () => {
             <RetroButton to="/join">
               Join Room
             </RetroButton>
+            <RetroButton to="/stranger">
+              Talk to a Stranger
+            </RetroButton>
           </div>
 
           <SystemStatus />

@@ -15,6 +15,11 @@ management:
       show-details: always
 
 hush:
+  admin:
+    username: admin
+    password: adminpass
+  room:
+    group-max-participants: 1000
   cors:
     allowed-origins: "http://localhost:5173,http://localhost:5174,http://localhost:5175,http://localhost:3000,http://localhost:*,http://127.0.0.1:*"
   lifecycle:
@@ -25,10 +30,10 @@ hush:
     trust-forwarded-for: false
     cleanup-interval-seconds: 60
     room-creation:
-      max-attempts: 5
+      max-attempts: 10000
       window-seconds: 600
     join-attempt:
-      max-attempts: 20
+      max-attempts: 5000
       window-seconds: 60
     message:
       max-attempts: 10

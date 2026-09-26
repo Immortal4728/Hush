@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send } from 'lucide-react';
+import { Send, Terminal } from 'lucide-react';
 import type { ConnectionStatus } from '../../../hooks/useWebSocket';
 
 interface ModernMessageComposerProps {
@@ -16,6 +16,7 @@ export const ModernMessageComposer: React.FC<ModernMessageComposerProps> = ({
   onLocalCommand,
 }) => {
   const [inputText, setInputText] = useState('');
+  const [showCommandMenu, setShowCommandMenu] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTypingSentRef = useRef<number>(0);
@@ -37,6 +38,7 @@ export const ModernMessageComposer: React.FC<ModernMessageComposerProps> = ({
     }
 
     setInputText('');
+    setShowCommandMenu(false);
     onSendTyping(false);
     lastTypingSentRef.current = 0;
   };
@@ -71,26 +73,66 @@ export const ModernMessageComposer: React.FC<ModernMessageComposerProps> = ({
     }
   };
 
+  const executeCommand = (cmd: string) => {
+    if (onLocalCommand) {
+      onLocalCommand(cmd);
+    }
+    setShowCommandMenu(false);
+  };
+
   return (
     <div className="modern-composer-box font-sans">
+      {showCommandMenu && (
+        <div className="modern-command-menu font-mono">
+          <div className="menu-header">AVAILABLE COMMANDS</div>
+          <button type="button" onClick={() => executeCommand('/peers')} className="cmd-item">
+            <span className="cmd-name">/peers</span>
+            <span className="cmd-desc">List connected participants</span>
+          </button>
+          <button type="button" onClick={() => executeCommand('/info')} className="cmd-item">
+            <span className="cmd-name">/info</span>
+            <span className="cmd-desc">Show room parameters</span>
+          </button>
+          <button type="button" onClick={() => executeCommand('/clear')} className="cmd-item">
+            <span className="cmd-name">/clear</span>
+            <span className="cmd-desc">Clear local view</span>
+          </button>
+          <button type="button" onClick={() => executeCommand('/help')} className="cmd-item">
+            <span className="cmd-name">/help</span>
+            <span className="cmd-desc">All commands</span>
+          </button>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="modern-composer-form">
-        <textarea
-          ref={textareaRef}
-          value={inputText}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          placeholder={
-            isConnected
-              ? 'Type a message...'
-              : status === 'CONNECTING'
-              ? 'Connecting to server...'
-              : 'Disconnected'
-          }
-          disabled={!isConnected}
-          maxLength={2000}
-          rows={1}
-          className="modern-textarea font-sans"
-        />
+        <div className="modern-composer-input-row">
+          <button
+            type="button"
+            onClick={() => setShowCommandMenu(!showCommandMenu)}
+            className={`modern-cmd-toggle-btn ${showCommandMenu ? 'active' : ''}`}
+            title="Terminal commands"
+          >
+            <Terminal className="w-4 h-4" />
+          </button>
+
+          <textarea
+            ref={textareaRef}
+            value={inputText}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            placeholder={
+              isConnected
+                ? 'Type a message...'
+                : status === 'CONNECTING'
+                ? 'Connecting to server...'
+                : 'Disconnected'
+            }
+            disabled={!isConnected}
+            maxLength={2000}
+            rows={1}
+            className="modern-textarea font-sans"
+          />
+        </div>
 
         <div className="modern-composer-actions">
           <span className="modern-char-count font-mono">{inputText.length}/2000</span>

@@ -1,0 +1,194 @@
+{
+  "tieredResults": [
+    {
+      "targetUsers": 100,
+      "roomsCreated": 27,
+      "establishedConnections": 100,
+      "failedConnections": 0,
+      "connectDurationMs": 628,
+      "totalSentMessages": 340,
+      "latencies": {
+        "avg": 0,
+        "p95": 0,
+        "p99": 0,
+        "min": 0,
+        "max": 0
+      },
+      "baselineHeapMb": 34,
+      "peakHeapMb": 34,
+      "finalHeapMb": 48,
+      "threadCount": 64,
+      "messagesBroadcast": 3404,
+      "rateLimitedMessages": 0,
+      "invalidMessages": 0
+    },
+    {
+      "targetUsers": 250,
+      "roomsCreated": 67,
+      "establishedConnections": 250,
+      "failedConnections": 0,
+      "connectDurationMs": 1261.63,
+      "totalSentMessages": 893,
+      "latencies": {
+        "avg": 0,
+        "p95": 0,
+        "p99": 0,
+        "min": 0,
+        "max": 0
+      },
+      "baselineHeapMb": 48,
+      "peakHeapMb": 64,
+      "finalHeapMb": 62,
+      "threadCount": 108,
+      "messagesBroadcast": 13206,
+      "rateLimitedMessages": 0,
+      "invalidMessages": 0
+    },
+    {
+      "targetUsers": 500,
+      "roomsCreated": 133,
+      "establishedConnections": 500,
+      "failedConnections": 0,
+      "connectDurationMs": 2963.54,
+      "totalSentMessages": 1838,
+      "latencies": {
+        "avg": 0,
+        "p95": 0,
+        "p99": 0,
+        "min": 0,
+        "max": 0
+      },
+      "baselineHeapMb": 62,
+      "peakHeapMb": 93,
+      "finalHeapMb": 106,
+      "threadCount": 214,
+      "messagesBroadcast": 36123,
+      "rateLimitedMessages": 0,
+      "invalidMessages": 0
+    },
+    {
+      "targetUsers": 750,
+      "roomsCreated": 200,
+      "establishedConnections": 750,
+      "failedConnections": 0,
+      "connectDurationMs": 5076.73,
+      "totalSentMessages": 2684,
+      "latencies": {
+        "avg": 0,
+        "p95": 0,
+        "p99": 0,
+        "min": 0,
+        "max": 0
+      },
+      "baselineHeapMb": 106,
+      "peakHeapMb": 154,
+      "finalHeapMb": 117,
+      "threadCount": 214,
+      "messagesBroadcast": 70627,
+      "rateLimitedMessages": 0,
+      "invalidMessages": 0
+    },
+    {
+      "targetUsers": 1000,
+      "roomsCreated": 265,
+      "establishedConnections": 1000,
+      "failedConnections": 0,
+      "connectDurationMs": 8834.61,
+      "totalSentMessages": 3660,
+      "latencies": {
+        "avg": 0,
+        "p95": 0,
+        "p99": 0,
+        "min": 0,
+        "max": 0
+      },
+      "baselineHeapMb": 130,
+      "peakHeapMb": 154,
+      "finalHeapMb": 172,
+      "threadCount": 214,
+      "messagesBroadcast": 119025,
+      "rateLimitedMessages": 0,
+      "invalidMessages": 0
+    },
+    {
+      "targetUsers": 1250,
+      "roomsCreated": 332,
+      "establishedConnections": 1000,
+      "failedConnections": 250,
+      "connectDurationMs": 14673.12,
+      "totalSentMessages": 2981,
+      "latencies": {
+        "avg": 0,
+        "p95": 0,
+        "p99": 0,
+        "min": 0,
+        "max": 0
+      },
+      "baselineHeapMb": 185,
+      "peakHeapMb": 188,
+      "finalHeapMb": 205,
+      "threadCount": 214,
+      "messagesBroadcast": 148621,
+      "rateLimitedMessages": 0,
+      "invalidMessages": 0
+    }
+  ],
+  "singleRoomResults": [
+    {
+      "singleRoomSize": 100,
+      "connectedCount": 100,
+      "messagesSent": 10,
+      "latencies": {
+        "avg": 0,
+        "p95": 0,
+        "p99": 0,
+        "min": 0,
+        "max": 0
+      },
+      "heapMb": 263,
+      "threadCount": 214
+    },
+    {
+      "singleRoomSize": 250,
+      "connectedCount": 248,
+      "messagesSent": 10,
+      "latencies": {
+        "avg": 0,
+        "p95": 0,
+        "p99": 0,
+        "min": 0,
+        "max": 0
+      },
+      "heapMb": 255,
+      "threadCount": 214
+    },
+    {
+      "singleRoomSize": 500,
+      "connectedCount": 355,
+      "messagesSent": 10,
+      "latencies": {
+        "avg": 0,
+        "p95": 0,
+        "p99": 0,
+        "min": 0,
+        "max": 0
+      },
+      "heapMb": 211,
+      "threadCount": 214
+    }
+  ],
+  "reconnectionResults": {
+    "totalUsers": 250,
+    "disconnected": 50,
+    "reconnected": 50,
+    "initialConns": 250,
+    "afterDisconnectConns": 200,
+    "finalConns": 250
+  },
+  "expirationResults": {
+    "initialActiveRooms": 40,
+    "finalActiveRooms": 40,
+    "emptyRoomsDestroyed": 1013
+  },
+  "summaryTable": []
+}

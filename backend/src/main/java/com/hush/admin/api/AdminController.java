@@ -28,11 +28,24 @@ public class AdminController {
 
     private final AdminAuthService adminAuthService;
     private final RoomService roomService;
+    private final com.hush.ratelimit.RateLimitingService rateLimitingService;
+    private final com.hush.metrics.MetricsService metricsService;
     private final Instant startTime = Instant.now();
 
     public AdminController(AdminAuthService adminAuthService, RoomService roomService) {
+        this(adminAuthService, roomService, null, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public AdminController(AdminAuthService adminAuthService,
+                           RoomService roomService,
+                           com.hush.ratelimit.RateLimitingService rateLimitingService,
+                           com.hush.metrics.MetricsService metricsService) {
         this.adminAuthService = Objects.requireNonNull(adminAuthService);
         this.roomService = Objects.requireNonNull(roomService);
+        this.rateLimitingService = rateLimitingService;
+        this.metricsService = metricsService != null ? metricsService :
+                new com.hush.metrics.MetricsService(new com.hush.config.HushRateLimitProperties());
     }
 
     @PostMapping("/login")
@@ -115,8 +128,10 @@ public class AdminController {
             }
         }
 
+        int activeConns = rateLimitingService != null ? rateLimitingService.getActiveWebSocketConnections() : totalParticipants;
+
         AdminStatsDto stats = new AdminStatsDto(
-                totalParticipants,
+                activeConns,
                 activeRooms,
                 directChats,
                 groupRooms,
@@ -126,6 +141,26 @@ public class AdminController {
         );
 
         return ResponseEntity.ok(stats);
+    }
+
+    @GetMapping("/metrics")
+    public ResponseEntity<com.hush.metrics.MetricsService.OperationalMetricsSnapshot> getOperationalMetrics() {
+        Collection<Room> rooms = roomService.getAllRooms();
+        int directChats = 0;
+        int groupRooms = 0;
+        int totalParticipants = 0;
+
+        for (Room room : rooms) {
+            if (room.getRoomType() == RoomType.DIRECT) directChats++;
+            else if (room.getRoomType() == RoomType.GROUP) groupRooms++;
+            totalParticipants += room.getParticipantCount();
+        }
+
+        int activeConns = rateLimitingService != null ? rateLimitingService.getActiveWebSocketConnections() : totalParticipants;
+
+        com.hush.metrics.MetricsService.OperationalMetricsSnapshot snapshot =
+                metricsService.getSnapshot(activeConns, rooms.size(), directChats, groupRooms, totalParticipants);
+        return ResponseEntity.ok(snapshot);
     }
 
     @GetMapping("/rooms")
@@ -153,7 +188,8 @@ public class AdminController {
         long maxMb = runtime.maxMemory() / (1024 * 1024);
 
         Collection<Room> rooms = roomService.getAllRooms();
-        int totalConn = rooms.stream().mapToInt(Room::getParticipantCount).sum();
+        int totalParticipants = rooms.stream().mapToInt(Room::getParticipantCount).sum();
+        int activeConns = rateLimitingService != null ? rateLimitingService.getActiveWebSocketConnections() : totalParticipants;
         long uptime = Duration.between(startTime, Instant.now()).getSeconds();
 
         AdminHealthDto health = new AdminHealthDto(
@@ -164,7 +200,7 @@ public class AdminController {
                 usedMb,
                 maxMb,
                 rooms.size(),
-                totalConn,
+                activeConns,
                 uptime
         );
 

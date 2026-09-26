@@ -1,5 +1,6 @@
 package com.hush.room;
 
+import com.hush.config.HushRoomProperties;
 import com.hush.exception.RoomNotFoundException;
 import com.hush.participant.Participant;
 import org.springframework.stereotype.Service;
@@ -19,9 +20,16 @@ public class RoomService {
 
     private final ConcurrentHashMap<String, Room> activeRooms = new ConcurrentHashMap<>();
     private final CodeGenerator codeGenerator;
+    private final HushRoomProperties roomProperties;
 
     public RoomService(CodeGenerator codeGenerator) {
+        this(codeGenerator, new HushRoomProperties());
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public RoomService(CodeGenerator codeGenerator, HushRoomProperties roomProperties) {
         this.codeGenerator = Objects.requireNonNull(codeGenerator, "codeGenerator must not be null");
+        this.roomProperties = roomProperties != null ? roomProperties : new HushRoomProperties();
     }
 
     public Room createRoom(RoomType roomType, Duration ttl) {
@@ -32,13 +40,17 @@ public class RoomService {
             throw new IllegalArgumentException("ttl must be positive and at most 24 hours (1440 minutes)");
         }
 
+        int maxCapacity = roomType == RoomType.DIRECT ?
+                roomProperties.getDirectMaxParticipants() : roomProperties.getGroupMaxParticipants();
+        int maxHistory = roomProperties.getMaxHistoryMessages();
+
         int attempts = 0;
         while (attempts < MAX_COLLISION_RETRIES) {
             String candidateCode = codeGenerator.generateCode();
             Instant createdAt = Instant.now();
             Instant expiresAt = createdAt.plus(ttl);
 
-            Room room = new Room(candidateCode, roomType, createdAt, expiresAt);
+            Room room = new Room(candidateCode, roomType, createdAt, expiresAt, maxCapacity, maxHistory);
 
             if (activeRooms.putIfAbsent(candidateCode, room) == null) {
                 return room;

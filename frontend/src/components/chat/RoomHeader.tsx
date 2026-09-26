@@ -15,6 +15,7 @@ interface RoomHeaderProps {
   isSidebarOpen: boolean;
   uiMode?: 'MODERN' | 'TERMINAL';
   onToggleUiMode?: () => void;
+  onNextStranger?: () => void;
 }
 
 export const RoomHeader: React.FC<RoomHeaderProps> = ({
@@ -30,6 +31,7 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
   isSidebarOpen,
   uiMode,
   onToggleUiMode,
+  onNextStranger,
 }) => {
   const isConnected = status === 'CONNECTED';
   const statusColorClass = isConnected ? 'sys-ok' : status === 'EXPIRING' ? 'sys-warn' : 'sys-error';
@@ -77,6 +79,18 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
         <span className="header-stat-item hidden sm:inline-block font-mono">
           [ PEERS: {participantCount} ]
         </span>
+
+        {onNextStranger && (
+          <button
+            onClick={onNextStranger}
+            className="terminal-nav-btn font-mono"
+            type="button"
+            title="Find another stranger"
+            style={{ color: '#00ffaa', borderColor: 'rgba(0,255,170,0.5)' }}
+          >
+            <span>[ NEXT STRANGER ]</span>
+          </button>
+        )}
 
         {onToggleUiMode && (
           <button

@@ -26,14 +26,20 @@ public class Room {
     private Instant emptySince;
     private boolean expiringNotified;
 
-    private static final int MAX_ROOM_MESSAGES = 500;
+    public static final int MAX_ROOM_MESSAGES = 500;
+    private final int maxHistoryMessages;
     private final Queue<ChatMessage> messages = new ConcurrentLinkedQueue<>();
     private final ConcurrentHashMap<String, Participant> participants = new ConcurrentHashMap<>();
 
     public Room(String roomCode, RoomType roomType, Instant createdAt, Instant expiresAt) {
+        this(roomCode, roomType, createdAt, expiresAt, roomType.getMaxParticipants(), MAX_ROOM_MESSAGES);
+    }
+
+    public Room(String roomCode, RoomType roomType, Instant createdAt, Instant expiresAt, int maxParticipants, int maxHistoryMessages) {
         this.roomCode = validateRoomCode(roomCode);
         this.roomType = Objects.requireNonNull(roomType, "roomType must not be null");
-        this.maxParticipants = roomType.getMaxParticipants();
+        this.maxParticipants = maxParticipants > 0 ? maxParticipants : roomType.getMaxParticipants();
+        this.maxHistoryMessages = maxHistoryMessages > 0 ? maxHistoryMessages : MAX_ROOM_MESSAGES;
         this.createdAt = Objects.requireNonNull(createdAt, "createdAt must not be null");
         this.expiresAt = Objects.requireNonNull(expiresAt, "expiresAt must not be null");
 
@@ -50,7 +56,7 @@ public class Room {
         if (message == null) return;
         if (this.state == RoomState.DESTROYED || isExpired()) return;
         messages.add(message);
-        while (messages.size() > MAX_ROOM_MESSAGES) {
+        while (messages.size() > maxHistoryMessages) {
             messages.poll();
         }
     }
