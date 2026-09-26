@@ -58,8 +58,9 @@ export const JoinRoomPage: React.FC = () => {
         setError('THIS ROOM IS FULL');
         return;
       }
+      sessionStorage.setItem(`hush_origin_${roomCode}`, 'MANUAL');
       navigate(`/room/${roomCode}`, {
-        state: { username: trimmedName },
+        state: { username: trimmedName, isStranger: false },
       });
     } catch (err) {
       if (err instanceof ApiError) {

@@ -11,9 +11,6 @@ export const CreateRoomPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [roomType, setRoomType] = useState<RoomType>('DIRECT');
   const [ttlMinutes, setTtlMinutes] = useState(60);
-  const [uiMode, setUiMode] = useState<'MODERN' | 'TERMINAL'>(() => {
-    return (localStorage.getItem('hush_ui_mode') as 'MODERN' | 'TERMINAL') || 'MODERN';
-  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [createdRoom, setCreatedRoom] = useState<CreateRoomResponse | null>(null);
@@ -41,7 +38,6 @@ export const CreateRoomPage: React.FC = () => {
     setError(null);
 
     try {
-      localStorage.setItem('hush_ui_mode', uiMode);
       const data = await createRoom({ type: roomType, ttlMinutes });
       setCreatedRoom(data);
     } catch (err) {
@@ -68,9 +64,9 @@ export const CreateRoomPage: React.FC = () => {
 
   const enterRoom = () => {
     if (createdRoom) {
-      localStorage.setItem('hush_ui_mode', uiMode);
+      sessionStorage.setItem(`hush_origin_${createdRoom.roomCode}`, 'MANUAL');
       navigate(`/room/${createdRoom.roomCode}`, {
-        state: { username: username.trim(), uiMode },
+        state: { username: username.trim(), isStranger: false },
       });
     }
   };
@@ -147,30 +143,6 @@ export const CreateRoomPage: React.FC = () => {
                 </div>
 
                 <div className="field">
-                  <label className="terminal-label">ROOM INTERFACE</label>
-                  <div className="option-grid option-grid--2">
-                    <button
-                      type="button"
-                      className={`option-card ${uiMode === 'MODERN' ? 'selected' : ''}`}
-                      onClick={() => setUiMode('MODERN')}
-                      aria-pressed={uiMode === 'MODERN'}
-                    >
-                      <span className="option-title">MODERN</span>
-                      <span className="option-subtitle">Familiar chat interface for everyday users</span>
-                    </button>
-                    <button
-                      type="button"
-                      className={`option-card ${uiMode === 'TERMINAL' ? 'selected' : ''}`}
-                      onClick={() => setUiMode('TERMINAL')}
-                      aria-pressed={uiMode === 'TERMINAL'}
-                    >
-                      <span className="option-title">TERMINAL</span>
-                      <span className="option-subtitle">Classic HUSH terminal experience</span>
-                    </button>
-                  </div>
-                </div>
-
-                <div className="field">
                   <label className="terminal-label">DURATION</label>
                   <div className="option-grid option-grid--3">
                     {[
@@ -240,3 +212,4 @@ export const CreateRoomPage: React.FC = () => {
     </div>
   );
 };
+

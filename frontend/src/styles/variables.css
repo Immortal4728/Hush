@@ -1,58 +1,79 @@
 /* ════════════════════════════════════════════════════════════
-   HUSH · analog retro palette
-   aged phosphor / faded CRT red / warm gray on dirty black
+   HUSH · Analog Cyberpunk & Modern Ephemeral Palette
+   Dark, mysterious, technical, premium palette
    ════════════════════════════════════════════════════════════ */
 
 :root {
-  /* surfaces */
-  --void: #060607;
-  --bg: #0b0b0d;
-  --bg-2: #101013;
-  --bg-3: #16161a;
-  --panel: rgba(255, 255, 255, 0.024);
-  --panel-strong: rgba(255, 255, 255, 0.05);
+  /* Surfaces */
+  --void: #050506;
+  --bg: #09090b;
+  --bg-2: #0f0f12;
+  --bg-3: #15151a;
+  --bg-hover: #1c1c23;
+  --panel: rgba(18, 18, 22, 0.7);
+  --panel-strong: rgba(24, 24, 30, 0.85);
+  --panel-border: rgba(255, 255, 255, 0.07);
+  --panel-border-glow: rgba(0, 240, 255, 0.25);
 
-  /* ink */
-  --ink: #d8d3c4;        /* faded off-white */
-  --ink-dim: #97917f;    /* warm gray */
-  --ink-faint: #5c574b;  /* faint warm gray */
+  /* Ink & Typography */
+  --ink: #e6e4df;          /* Faded warm white */
+  --ink-muted: #b0aaa0;    /* Muted secondary text */
+  --ink-dim: #7a756b;      /* Darker tertiary text */
+  --ink-faint: #4a463e;    /* Faint border/label text */
 
-  /* accents — aged, never neon */
+  /* Accents — Aged Phosphor, Cyan Glow, CRT Red, Amber */
   --olive: #7c7a52;
   --olive-dim: #4e4a34;
-  --phosphor: #8cb56e;       /* old monitor phosphor green */
-  --phosphor-dim: #5d7f4b;
-  --crt-red: #c2413b;        /* old CRT red */
-  --crt-red-bright: #e4584f;
-  --cyan-pale: #8fbdba;      /* pale cyan, occasional */
-  --amber: #c9a54a;          /* aged amber, warnings/host */
+  --phosphor: #00ffaa;       /* Neon phosphor mint */
+  --phosphor-dim: #008f5d;
+  --cyan-glow: #00f0ff;      /* Cyberpunk cyan */
+  --cyan-dim: #007a85;
+  --crt-red: #ff3b30;        /* Warning CRT red */
+  --crt-red-dim: #a3221b;
+  --amber: #ffb300;          /* Aged amber */
+  --amber-dim: #855d00;
 
-  /* hairlines */
-  --line: rgba(216, 211, 198, 0.09);
-  --line-strong: rgba(216, 211, 198, 0.2);
+  /* Hairlines & Borders */
+  --line: rgba(230, 228, 223, 0.08);
+  --line-strong: rgba(230, 228, 223, 0.18);
+  --line-cyan: rgba(0, 240, 255, 0.2);
 
-  /* glitch channel separation (rgb triplets) */
-  --glitch-r: 255, 64, 54;
-  --glitch-c: 72, 216, 209;
+  /* Glitch channel separation (RGB triplets) */
+  --glitch-r: 255, 59, 48;
+  --glitch-c: 0, 240, 255;
 
-  /* shape */
-  --radius: 2px;
-  --transition: 0.18s ease;
+  /* Radius & Shadows */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius: 4px;
+  --transition: 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-fast: 0.12s ease;
+  
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.65);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.8);
+  --shadow-glow: 0 0 20px rgba(0, 240, 255, 0.12);
 
-  /* type */
+  /* Typography */
   --font-display: 'Anton', 'Arial Narrow', 'Impact', sans-serif;
   --font-crt: 'VT323', 'Courier New', monospace;
   --font-mono: 'IBM Plex Mono', 'Consolas', 'Menlo', monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 
-  /* layer stack */
+  /* Layer Stack */
   --z-content: 1;
   --z-header: 20;
+  --z-sidebar: 40;
   --z-drawer: 60;
+  --z-modal: 70;
   --z-glitch: 80;
   --z-transition: 95;
   --z-intro: 100;
   --z-scanlines: 110;
 
-  /* procedural analog noise (SVG turbulence) */
+  /* Analog Noise */
   --noise-url: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='240'%20height='240'%3E%3Cfilter%20id='n'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.85'%20numOctaves='2'%20stitchTiles='stitch'/%3E%3CfeColorMatrix%20type='saturate'%20values='0'/%3E%3C/filter%3E%3Crect%20width='100%25'%20height='100%25'%20filter='url(%23n)'/%3E%3C/svg%3E");
 }
+

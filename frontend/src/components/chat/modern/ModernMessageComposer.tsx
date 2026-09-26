@@ -1,22 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Terminal } from 'lucide-react';
+import { Send } from 'lucide-react';
 import type { ConnectionStatus } from '../../../hooks/useWebSocket';
 
 interface ModernMessageComposerProps {
   status: ConnectionStatus;
   onSendMessage: (text: string) => void;
   onSendTyping: (typing: boolean) => void;
-  onLocalCommand?: (command: string) => void;
 }
 
 export const ModernMessageComposer: React.FC<ModernMessageComposerProps> = ({
   status,
   onSendMessage,
   onSendTyping,
-  onLocalCommand,
 }) => {
   const [inputText, setInputText] = useState('');
-  const [showCommandMenu, setShowCommandMenu] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTypingSentRef = useRef<number>(0);
@@ -31,14 +28,9 @@ export const ModernMessageComposer: React.FC<ModernMessageComposerProps> = ({
     const trimmed = inputText.trim();
     if (!trimmed || !isConnected) return;
 
-    if (trimmed.startsWith('/') && onLocalCommand) {
-      onLocalCommand(trimmed);
-    } else {
-      onSendMessage(trimmed);
-    }
+    onSendMessage(trimmed);
 
     setInputText('');
-    setShowCommandMenu(false);
     onSendTyping(false);
     lastTypingSentRef.current = 0;
   };
@@ -73,48 +65,10 @@ export const ModernMessageComposer: React.FC<ModernMessageComposerProps> = ({
     }
   };
 
-  const executeCommand = (cmd: string) => {
-    if (onLocalCommand) {
-      onLocalCommand(cmd);
-    }
-    setShowCommandMenu(false);
-  };
-
   return (
     <div className="modern-composer-box font-sans">
-      {showCommandMenu && (
-        <div className="modern-command-menu font-mono">
-          <div className="menu-header">AVAILABLE COMMANDS</div>
-          <button type="button" onClick={() => executeCommand('/peers')} className="cmd-item">
-            <span className="cmd-name">/peers</span>
-            <span className="cmd-desc">List connected participants</span>
-          </button>
-          <button type="button" onClick={() => executeCommand('/info')} className="cmd-item">
-            <span className="cmd-name">/info</span>
-            <span className="cmd-desc">Show room parameters</span>
-          </button>
-          <button type="button" onClick={() => executeCommand('/clear')} className="cmd-item">
-            <span className="cmd-name">/clear</span>
-            <span className="cmd-desc">Clear local view</span>
-          </button>
-          <button type="button" onClick={() => executeCommand('/help')} className="cmd-item">
-            <span className="cmd-name">/help</span>
-            <span className="cmd-desc">All commands</span>
-          </button>
-        </div>
-      )}
-
       <form onSubmit={handleSubmit} className="modern-composer-form">
         <div className="modern-composer-input-row">
-          <button
-            type="button"
-            onClick={() => setShowCommandMenu(!showCommandMenu)}
-            className={`modern-cmd-toggle-btn ${showCommandMenu ? 'active' : ''}`}
-            title="Terminal commands"
-          >
-            <Terminal className="w-4 h-4" />
-          </button>
-
           <textarea
             ref={textareaRef}
             value={inputText}
@@ -142,7 +96,7 @@ export const ModernMessageComposer: React.FC<ModernMessageComposerProps> = ({
             className="modern-send-btn"
             title="Send message"
           >
-            <Send className="w-4 h-4" />
+            <Send size={15} />
             <span className="hidden sm:inline">Send</span>
           </button>
         </div>
@@ -150,3 +104,4 @@ export const ModernMessageComposer: React.FC<ModernMessageComposerProps> = ({
     </div>
   );
 };
+

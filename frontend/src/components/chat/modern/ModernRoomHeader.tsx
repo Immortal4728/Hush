@@ -1,4 +1,5 @@
 import React from 'react';
+import { Copy, Check, Users, LogOut, Clock, Radio } from 'lucide-react';
 import { CountdownTimer } from '../../CountdownTimer';
 import type { ConnectionStatus } from '../../../hooks/useWebSocket';
 
@@ -7,15 +8,12 @@ interface ModernRoomHeaderProps {
   status: ConnectionStatus;
   expiresAt?: string;
   participantCount: number;
-  roomType?: string;
   onCopyCode: () => void;
   copied: boolean;
   onLeave: () => void;
   onHomeNavigate: () => void;
   onToggleSidebar: () => void;
   isSidebarOpen: boolean;
-  uiMode: 'MODERN' | 'TERMINAL';
-  onToggleUiMode: () => void;
   onNextStranger?: () => void;
 }
 
@@ -24,15 +22,12 @@ export const ModernRoomHeader: React.FC<ModernRoomHeaderProps> = ({
   status,
   expiresAt,
   participantCount,
-  roomType,
   onCopyCode,
   copied,
   onLeave,
   onHomeNavigate,
   onToggleSidebar,
   isSidebarOpen,
-  uiMode,
-  onToggleUiMode,
   onNextStranger,
 }) => {
   const isConnected = status === 'CONNECTED';
@@ -49,7 +44,6 @@ export const ModernRoomHeader: React.FC<ModernRoomHeaderProps> = ({
           title="Return to Home"
         >
           <span className="modern-brand-name">HUSH</span>
-          <span className="modern-brand-badge">SECURE</span>
         </button>
 
         <div className="modern-room-badge">
@@ -61,26 +55,24 @@ export const ModernRoomHeader: React.FC<ModernRoomHeaderProps> = ({
             title="Copy room code"
             type="button"
           >
-            {copied ? '✓ COPIED' : 'COPY'}
+            {copied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+            <span>{copied ? 'COPIED' : 'COPY'}</span>
           </button>
         </div>
 
-        {roomType && (
-          <div className="modern-type-badge hidden md:flex">
-            <span>{roomType}</span>
+        {/* Subtle connection warning status tag ONLY when NOT connected */}
+        {!isConnected && (
+          <div className={`modern-status-tag ${statusColorClass}`}>
+            <span className="status-dot" />
+            <span className="status-text">{statusLabel}</span>
           </div>
         )}
-
-        <div className={`modern-status-tag ${statusColorClass}`}>
-          <span className="status-dot" />
-          <span className="status-text">{statusLabel}</span>
-        </div>
       </div>
 
       <div className="modern-header-right">
         {expiresAt && (
           <div className="modern-timer-box font-mono" title="Session time remaining">
-            <span className="timer-icon">⏳</span>
+            <Clock size={14} className="timer-icon" />
             <CountdownTimer expiresAt={expiresAt} />
           </div>
         )}
@@ -88,12 +80,12 @@ export const ModernRoomHeader: React.FC<ModernRoomHeaderProps> = ({
         {onNextStranger && (
           <button
             onClick={onNextStranger}
-            className="modern-nav-btn font-mono"
+            className="modern-next-stranger-btn"
             type="button"
             title="Find another stranger"
-            style={{ color: '#00ffaa', borderColor: 'rgba(0,255,170,0.5)', backgroundColor: 'rgba(0,255,170,0.1)' }}
           >
-            NEXT STRANGER
+            <Radio size={14} />
+            <span>NEXT STRANGER</span>
           </button>
         )}
 
@@ -103,22 +95,16 @@ export const ModernRoomHeader: React.FC<ModernRoomHeaderProps> = ({
           type="button"
           title="Participants & Room Details"
         >
-          PEERS ({participantCount})
-        </button>
-
-        <button
-          onClick={onToggleUiMode}
-          className="modern-mode-switch-btn font-mono"
-          type="button"
-          title="Switch to Terminal UI"
-        >
-          {uiMode}
+          <Users size={14} />
+          <span>PEERS ({participantCount})</span>
         </button>
 
         <button onClick={onLeave} className="modern-exit-btn" type="button" title="Leave room">
-          EXIT
+          <LogOut size={14} />
+          <span>EXIT</span>
         </button>
       </div>
     </header>
   );
 };
+

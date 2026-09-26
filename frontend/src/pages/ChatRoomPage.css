@@ -501,14 +501,8 @@
 .cursor-block {
   color: var(--crt-red-bright, #ff4a4a);
   font-size: 0.9rem;
-  animation: blinkCaret 0.8s step-end infinite;
   pointer-events: none;
   margin-left: 2px;
-}
-
-@keyframes blinkCaret {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
 }
 
 /* ── Optional Slide-over Terminal Diagnostics Drawer ── */
@@ -717,7 +711,6 @@
 .timer-warning .timer-digits,
 .timer-warning .timer-symbol {
   color: #ffb703;
-  animation: blinkSoft 1.5s infinite;
 }
 
 .privacy-section {

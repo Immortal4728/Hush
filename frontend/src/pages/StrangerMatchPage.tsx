@@ -73,6 +73,7 @@ export const StrangerMatchPage: React.FC = () => {
   const handleMatched = (roomCode: string, username: string) => {
     setMatchState('MATCHED');
     setMatchedRoom({ roomCode, username });
+    sessionStorage.setItem(`hush_origin_${roomCode}`, 'STRANGER');
     setTimeout(() => {
       if (!isCancelledRef.current) {
         navigate(`/room/${roomCode}`, {
