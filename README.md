@@ -135,26 +135,7 @@ HUSH operates as a high-throughput, single-instance JVM application engineered f
 └──────────────────┘             └──────────────────┘             └──────────────────┘
 ```
 
-### High-Level Data Flow
-
-```mermaid
-graph TD
-    User[Anonymous Client] -->|HTTPS / WSS| WebUI[React 18 Frontend App]
-    WebUI -->|WebSocket Channel| WS[ChatWebSocketHandler]
-    WebUI -->|REST API| REST[Spring Boot Controllers]
-    
-    REST -->|Create / Join| RoomManager[RoomService]
-    REST -->|Queue Pairing| MatchEngine[StrangerMatchmakingService]
-    
-    WS -->|In-Memory Broadcast| RoomManager
-    WS -->|Atomic Counters| Metrics[MetricsService]
-    
-    subgraph Volatile Memory (RAM Only)
-        RoomManager
-        MatchEngine
-        Metrics
-    end
-```
+ 
 
 <br />
 
